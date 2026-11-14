@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>เจ้าหน้าที่ – ระบบติดตามพฤติกรรม รพ.สต.บ้านนาเพียงใหม่</title>
+<link rel="icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f1f5f3;color:#1f2d27;font-size:16px;line-height:1.5}
+.top{background:#0f7a5c;color:#fff;padding:12px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.top h1{font-size:20px;font-weight:700;margin-right:auto}
+.top .who{font-size:14px;opacity:.9}
+.tabs{background:#fff;border-bottom:1px solid #dde7e2;display:flex;overflow-x:auto;padding:0 10px}
+.tabs button{border:none;background:none;font:inherit;font-size:16px;padding:12px 16px;color:#5b6b64;border-bottom:3px solid transparent;white-space:nowrap;cursor:pointer}
+.tabs button.on{color:#0f7a5c;border-bottom-color:#0f7a5c;font-weight:700}
+.tabs .badge{background:#d0442c;color:#fff;border-radius:10px;padding:0 7px;font-size:13px;margin-left:4px}
+main{max-width:1200px;margin:0 auto;padding:16px}
+.view{display:none}.view.on{display:block}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+select,input,textarea{font:inherit;font-size:16px;padding:8px 10px;border:1px solid #cfdcd6;border-radius:8px;background:#fff}
+.seg{display:inline-flex;border:1px solid #cfdcd6;border-radius:8px;overflow:hidden}
+.seg button{border:none;background:#fff;font:inherit;font-size:15px;padding:8px 12px;cursor:pointer}
+.seg button.on{background:#0f7a5c;color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border-radius:12px;padding:12px 14px;border:1px solid #e3ebe7}
+.kpi .l{font-size:14px;color:#5b6b64}
+.kpi .v{font-size:30px;font-weight:700;line-height:1.2}
+.kpi .s{font-size:13px;color:#8a9893}
+.kpi.red .v{color:#c0392b}.kpi.amber .v{color:#b36b00}.kpi.green .v{color:#0f7a5c}
+.grid2{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:900px){.grid2{grid-template-columns:380px 1fr}}
+.panel{background:#fff;border-radius:12px;border:1px solid #e3ebe7;padding:14px;margin-bottom:14px}
+.panel h2{font-size:18px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.panel h2 .r{margin-left:auto;font-size:14px;font-weight:400;color:#5b6b64}
+.flag{border:1px solid #f3cfc9;background:#fff7f6;border-radius:10px;padding:10px;margin-bottom:8px}
+.flag.done{background:#f5f8f6;border-color:#dfe8e3;opacity:.75}
+.flag .t{font-weight:700}
+.flag .m{font-size:14px;color:#5b6b64}
+.flag .act{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.btn{border:1px solid #0f7a5c;background:#fff;color:#0f7a5c;font:inherit;font-size:14px;padding:6px 12px;border-radius:8px;cursor:pointer}
+.btn.pri{background:#0f7a5c;color:#fff}
+.btn.big{font-size:17px;padding:10px 18px}
+.pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;font-weight:600;white-space:nowrap}
+.p-ckd{background:#e6f0fa;color:#1d5a91}.p-dm{background:#f6ebfa;color:#7a2f8f}
+.p-red{background:#fde3e1;color:#a3261b}.p-amb{background:#fdeccc;color:#8a5200}.p-grn{background:#e3f4ec;color:#0a5a43}.p-gry{background:#eef1f0;color:#6b7a73}.p-org{background:#fde6d6;color:#9a4511}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;color:#5b6b64;font-weight:600;padding:8px 6px;border-bottom:2px solid #e3ebe7;white-space:nowrap}
+td{padding:8px 6px;border-bottom:1px solid #eef3f0;vertical-align:middle}
+tr.click{cursor:pointer}tr.click:hover{background:#f5faf7}
+.tbl{overflow-x:auto}
+.bar{height:8px;background:#eef1f0;border-radius:4px;overflow:hidden;width:80px;display:inline-block;vertical-align:middle;margin-right:6px}
+.bar i{display:block;height:100%}
+.heat{border-collapse:separate;border-spacing:3px;font-size:13px}
+.heat td,.heat th{border:none;padding:0;text-align:center}
+.heat td.c{width:26px;height:26px;border-radius:5px}
+.heat td.lbl{text-align:left;padding-right:8px;white-space:nowrap;font-size:14px}
+.h1{background:#2e9e6b}.h0{background:#f0a59b}.hn{background:#e6ebe9}
+.legend{font-size:13px;color:#5b6b64;display:flex;gap:12px;margin-top:6px;flex-wrap:wrap}
+.legend span::before{content:'';display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.legend .l1::before{background:#2e9e6b}.legend .l0::before{background:#f0a59b}.legend .ln::before{background:#e6ebe9}
+.form{display:grid;grid-template-columns:1fr;gap:10px;max-width:560px}
+.form label{font-size:14px;color:#5b6b64;display:block;margin-bottom:3px}
+.form .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form input,.form select,.form textarea{width:100%}
+.preview{border-radius:10px;padding:12px;margin-top:4px;font-size:15px}
+.err{color:#c0392b;font-size:14px;margin-top:2px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1f2d27;color:#fff;padding:10px 18px;border-radius:10px;font-size:15px;display:none;z-index:20}
+.toast.show{display:block}
+.back{border:none;background:none;color:#0f7a5c;font:inherit;font-size:15px;cursor:pointer;margin-bottom:8px}
+.ph{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ph h2{font-size:22px;margin:0}
+.labs{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.labs div{border-radius:10px;padding:8px 12px;text-align:center;font-size:13px;min-width:90px}
+.labs b{display:block;font-size:22px}
+.note{border-left:3px solid #0f7a5c;padding:4px 10px;margin-bottom:8px;font-size:15px}
+.note .d{font-size:13px;color:#8a9893}
+.goalrow{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.goalrow label{min-width:130px;font-size:15px}
+.goalrow input{width:90px}
+.chart{width:100%;height:auto;display:block}
+.qrbox{display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:#f3faf6;border:1px dashed #0f7a5c;border-radius:12px;padding:14px;margin-top:12px}
+.qrbox code{font-size:13px;word-break:break-all;background:#fff;padding:4px 6px;border-radius:6px;display:block;margin-top:4px}
+.muted{color:#8a9893;font-size:14px}
+.login{max-width:380px;margin:60px auto;background:#fff;border-radius:14px;border:1px solid #e3ebe7;padding:24px}
+.login h2{font-size:22px;margin-bottom:4px}
+.login input{width:100%;margin-top:4px;margin-bottom:12px}
+.spin{width:34px;height:34px;border:4px solid #cfe3da;border-top-color:#0f7a5c;border-radius:50%;animation:sp 1s linear infinite;margin:30px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.top .btn{border-color:#fff;color:#fff;background:transparent}
+@media print{body *{visibility:hidden}#printArea,#printArea *{visibility:visible}#printArea{position:absolute;left:0;top:0;width:100%}}
+#printArea{display:none}
+@media print{#printArea{display:block}}
+.pcard{border:2px dashed #0f7a5c;border-radius:14px;padding:18px;width:320px;text-align:center;font-family:Sarabun,sans-serif}
+.pcard h3{font-size:20px;margin:6px 0}
+.pcard p{font-size:15px;margin:2px 0}
+.pcard #pqr{display:flex;justify-content:center;margin:10px 0}
+</style>
+</head>
+<body>
+<div class="top"><h1>🩺 ระบบติดตามพฤติกรรม · รพ.สต.บ้านนาเพียงใหม่</h1><div class="who" id="who"></div></div>
+
+<!-- เข้าสู่ระบบ -->
+<div class="login" id="loginBox" style="display:none">
+  <h2>🔐 เข้าสู่ระบบเจ้าหน้าที่</h2>
+  <p class="muted" style="margin-bottom:14px">ใช้รหัสที่ตั้งไว้ใน Apps Script (setStaffPassword)</p>
+  <label class="muted">ชื่อผู้ใช้งาน (แสดงในบันทึก)</label><input id="lName" placeholder="เช่น พยาบาลสุภาณี" maxlength="40">
+  <label class="muted">รหัสผ่าน</label><input id="lPw" type="password" onkeydown="if(event.key==='Enter')doLogin()">
+  <div class="err" id="lErr"></div>
+  <button class="btn pri big" style="width:100%;margin-top:6px" id="lBtn" onclick="doLogin()">เข้าสู่ระบบ</button>
+</div>
+
+<div id="appBox" style="display:none">
+<div class="tabs" id="tabs">
+  <button class="on" data-v="ov">📊 ภาพรวม <span class="badge" id="flagBadge">0</span></button>
+  <button data-v="pt">👤 รายบุคคล</button>
+  <button data-v="lab">🧪 บันทึกผลตรวจ</button>
+  <button data-v="reg">➕ ลงทะเบียน</button>
+</div>
+<main>
+<section class="view on" id="v-ov">
+  <div class="filters">
+    <div class="seg" id="grpSeg"><button class="on" data-g="all">ทั้งหมด</button><button data-g="ckd">🫘 ชะลอไต</button><button data-g="dm">🏃 ลดหวานลดพุง</button></div>
+    <select id="mooSel"><option value="all">ทุกหมู่บ้าน</option></select>
+    <button class="btn" onclick="loadOv()">🔄 รีเฟรช</button>
+    <span class="muted" id="ovTime"></span>
+  </div>
+  <div id="ovBody"><div class="spin"></div></div>
+</section>
+
+<section class="view" id="v-pt">
+  <div class="filters"><label>เลือกผู้ป่วย</label> <select id="ptSel"></select></div>
+  <div id="ptBody"><p class="muted">เลือกผู้ป่วย หรือกดชื่อจากหน้าภาพรวม</p></div>
+</section>
+
+<section class="view" id="v-lab">
+  <div class="panel">
+    <h2>🧪 บันทึกผลตรวจ / ผลวัด</h2>
+    <p class="muted" style="margin-bottom:10px">ผลแล็บ (HbA1c, eGFR) ทุก 3 เดือน · ค่าความเค็มแกงจาก อสม. · น้ำหนักที่ชั่งที่ รพ.สต.</p>
+    <div class="form">
+      <div><label>ผู้ป่วย</label><select id="labPt"></select></div>
+      <div class="row2">
+        <div><label>ประเภท</label><select id="labType"></select></div>
+        <div><label>วันที่ตรวจ</label><input type="date" id="labDate"></div>
+      </div>
+      <div><label id="labValLbl">ค่า</label><input id="labVal" inputmode="decimal" placeholder="กรอกตัวเลข"><div class="err" id="labErr"></div></div>
+      <div id="labPrev"></div>
+      <div><button class="btn pri big" id="labBtn" onclick="saveLab()">💾 บันทึกผล</button></div>
+    </div>
+  </div>
+  <div class="panel"><h2>🕘 บันทึกในรอบนี้</h2><div class="tbl"><table id="labRecent"></table></div></div>
+</section>
+
+<section class="view" id="v-reg">
+  <div class="panel">
+    <h2>➕ ลงทะเบียนผู้ป่วยเข้าโครงการ</h2>
+    <div class="form">
+      <div class="row2">
+        <div><label>ชื่อ-สกุล *</label><input id="rName" placeholder="นาย/นาง ..." maxlength="60"></div>
+        <div><label>อายุ *</label><input id="rAge" inputmode="numeric" maxlength="3"></div>
+      </div>
+      <div class="row2">
+        <div><label>หมู่ที่ *</label><select id="rMoo"></select></div>
+        <div><label>กลุ่ม *</label><select id="rGrp"><option value="ckd">🫘 กลุ่มชะลอไต</option><option value="dm">🏃 กลุ่มลดหวานลดพุง</option></select></div>
+      </div>
+      <div class="row2">
+        <div><label>ผู้บันทึกหลัก</label><select id="rRec"><option>ผู้ป่วยบันทึกเอง</option><option>ญาติบันทึกให้</option><option>อสม. บันทึกให้</option></select></div>
+        <div><label>อสม. ผู้ดูแล</label><input id="rOsm" placeholder="ชื่อ อสม." maxlength="40"></div>
+      </div>
+      <div class="row2">
+        <div><label>เบอร์โทร (ถ้ามี)</label><input id="rPhone" inputmode="tel" maxlength="12"></div>
+        <div><label>วันที่ตรวจแล็บก่อนเริ่ม</label><input type="date" id="rLabDate"></div>
+      </div>
+      <div class="row2">
+        <div><label>ผลตรวจก่อนเริ่ม: <span id="rLabName">eGFR</span> *</label><input id="rLab" inputmode="decimal"></div>
+        <div><label>น้ำหนักเริ่มต้น (กก.) <span id="rWtReq"></span></label><input id="rWt" inputmode="decimal"></div>
+      </div>
+      <div class="row2">
+        <div><label>เป้าดื่มน้ำ (แก้ว/วัน)</label><input id="rWater" value="8" inputmode="numeric"></div>
+        <div><label>เป้าออกแรง (นาที/วัน)</label><input id="rMove" value="30" inputmode="numeric"></div>
+      </div>
+      <div><label style="color:#1f2d27;font-size:15px"><input type="checkbox" id="rConsent" style="width:auto"> ผู้ป่วยลงนามยินยอมเข้าร่วมและให้ใช้ข้อมูลแล้ว (PDPA) *</label></div>
+      <div class="err" id="rErr"></div>
+      <div><button class="btn pri big" id="rBtn" onclick="register()">✅ ลงทะเบียน และสร้าง QR</button></div>
+    </div>
+    <div id="qrOut"></div>
+  </div>
+</section>
+</main>
+</div>
+<div id="printArea"></div>
+<div class="toast" id="toast"></div>
+<script src="config.js"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const GN={ckd:'🫘 ชะลอไต',dm:'🏃 ลดหวานลดพุง'};
+const num=v=>(v===''||v==null||isNaN(Number(v)))?0:Number(v);
+const thD=s=>{const d=new Date(String(s).slice(0,10)+'T12:00:00');return isNaN(d)?esc(s):d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})};
+const thDs=s=>{const d=new Date(String(s).slice(0,10)+'T12:00:00');return isNaN(d)?esc(s):d.toLocaleDateString('th-TH',{day:'numeric',month:'short'})};
+const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const dAgo=n=>{const d=new Date();d.setHours(12);d.setDate(d.getDate()-n);return ymd(d)};
+const ss={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+let SESSION=ss.get('session'),SNAME=ss.get('sname')||'';
+
+/* ---------- API ---------- */
+async function api(action,data){
+  let j;
+  try{const r=await fetch(window.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action,session:SESSION},data||{}))});j=await r.json();}
+  catch(e){throw new Error('เชื่อมต่อระบบไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่')}
+  if(!j.ok){if(/เข้าสู่ระบบใหม่/.test(j.error||'')){logout(true)}throw new Error(j.error||'เกิดข้อผิดพลาด')}
+  return j;
+}
+
+/* ---------- เข้าสู่ระบบ ---------- */
+async function doLogin(){
+  const pw=$('lPw').value,name=$('lName').value.trim();
+  if(!name){$('lErr').textContent='กรุณากรอกชื่อผู้ใช้งาน';return}
+  if(!pw){$('lErr').textContent='กรุณากรอกรหัสผ่าน';return}
+  $('lBtn').disabled=true;$('lErr').textContent='';
+  try{const r=await api('login',{password:pw,name});SESSION=r.session;SNAME=r.name;ss.set('session',SESSION);ss.set('sname',SNAME);$('lPw').value='';start()}
+  catch(e){$('lErr').textContent=e.message}
+  $('lBtn').disabled=false;
+}
+function logout(expired){SESSION=null;ss.del('session');$('appBox').style.display='none';$('loginBox').style.display='block';$('who').innerHTML='';if(expired)$('lErr').textContent='หมดเวลาการใช้งาน กรุณาเข้าสู่ระบบใหม่';}
+function start(){
+  $('loginBox').style.display='none';$('appBox').style.display='block';
+  $('who').innerHTML='👤 '+esc(SNAME)+' <button class="btn" style="margin-left:8px" onclick="logout()">ออกจากระบบ</button>';
+  loadOv();
+}
+
+/* ---------- ข้อมูลกลาง ---------- */
+let OV=null,fG='all',fM='all';
+const PCACHE={};
+const byId=id=>(OV&&OV.patients||[]).find(p=>p.patient_id===id);
+async function loadOv(){
+  $('ovBody').innerHTML='<div class="spin"></div>';
+  try{OV=await api('overview');}catch(e){$('ovBody').innerHTML='<div class="panel"><p class="err">'+esc(e.message)+'</p></div>';return}
+  const moos=[...new Set(OV.patients.map(p=>String(p.moo)))].sort((a,b)=>a-b);
+  $('mooSel').innerHTML='<option value="all">ทุกหมู่บ้าน</option>'+moos.map(m=>'<option value="'+esc(m)+'"'+(m===fM?' selected':'')+'>หมู่ '+esc(m)+'</option>').join('');
+  const opts=OV.patients.map(p=>'<option value="'+esc(p.patient_id)+'">'+esc(p.name)+' ('+GN[p.group]+', หมู่ '+esc(p.moo)+')</option>').join('');
+  const cur=$('ptSel').value,curL=$('labPt').value;
+  $('ptSel').innerHTML='<option value="">— เลือก —</option>'+opts;$('labPt').innerHTML='<option value="">— เลือก —</option>'+opts;
+  $('ptSel').value=cur;$('labPt').value=curL;
+  $('ovTime').textContent='อัปเดต '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  renderOv();
+}
+document.querySelectorAll('#grpSeg button').forEach(b=>b.onclick=()=>{fG=b.dataset.g;document.querySelectorAll('#grpSeg button').forEach(x=>x.classList.toggle('on',x===b));renderOv()});
+$('mooSel').onchange=e=>{fM=e.target.value;renderOv()};
+$('rMoo').innerHTML=Array.from({length:15},(_,i)=>'<option>'+(i+1)+'</option>').join('');
+
+/* ---------- ภาพรวม ---------- */
+const a1cCls=v=>v<7?'p-grn':(v<8?'p-amb':'p-red');
+const egCls=v=>v>=60?'p-grn':(v>=45?'p-amb':(v>=30?'p-org':'p-red'));
+const egStage=v=>v>=90?'ระยะ 1':v>=60?'ระยะ 2':v>=45?'ระยะ 3a':v>=30?'ระยะ 3b':v>=15?'ระยะ 4':'ระยะ 5';
+const saltCls=v=>v<=0.7?'p-grn':(v<=0.9?'p-amb':'p-red');
+const saltTxt=v=>v<=0.7?'😊 เค็มน้อย':(v<=0.9?'😐 ปานกลาง':'😢 เค็มมาก');
+const kpi=(l,v,s,c)=>'<div class="kpi '+c+'"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="s">'+s+'</div></div>';
+function renderOv(){
+  if(!OV)return;
+  const P=OV.patients.filter(p=>(fG==='all'||p.group===fG)&&(fM==='all'||String(p.moo)===fM));
+  const ids=new Set(P.map(p=>p.patient_id));
+  const A=OV.alerts.filter(a=>ids.has(a.patient_id)).sort((a,b)=>((a.status==='open')===(b.status==='open')?0:(a.status==='open'?-1:1))||(b.level-a.level)||(a.date<b.date?1:-1));
+  const openA=A.filter(a=>a.status==='open'),recT=P.filter(p=>p.recToday).length;
+  const avg=P.length?Math.round(P.reduce((s,p)=>s+p.goalPct,0)/P.length):0;
+  $('flagBadge').textContent=OV.alerts.filter(a=>a.status==='open').length;
+  let h='<div class="kpis">'+kpi('ผู้ป่วยในโครงการ',P.length,'ชะลอไต '+P.filter(p=>p.group==='ckd').length+' · ลดหวาน '+P.filter(p=>p.group==='dm').length,'')+
+    kpi('บันทึกวันนี้',recT+'/'+P.length,(P.length?Math.round(recT/P.length*100):0)+'% ของผู้ป่วย','green')+
+    kpi('🚩 ต้องติดตาม',openA.length,'ด่วน '+openA.filter(a=>a.level>=3).length+' รายการ','red')+
+    kpi('ไม่บันทึก ≥ 3 วัน',P.filter(p=>p.noRecDays>=3).length,'ส่งให้ อสม. ติดตาม','amber')+
+    kpi('ทำได้ตามเป้า (7 วัน)',avg+'%','เฉลี่ยทุกพฤติกรรม','green')+'</div>';
+  h+='<div class="grid2"><div><div class="panel"><h2>🚩 ต้องติดตาม <span class="r">ค้าง '+openA.length+' รายการ</span></h2>';
+  h+=A.length?A.map(a=>{const p=byId(a.patient_id)||{name:a.patient_id,group:'ckd',moo:''};const done=a.status!=='open';
+    return '<div class="flag'+(done?' done':'')+'"><div class="t">'+(a.level>=3?'🔴':a.level==2?'🟠':'🟡')+' <a href="#" onclick="openPt(\''+esc(a.patient_id)+'\');return false">'+esc(p.name)+'</a> <span class="pill p-'+p.group+'">'+GN[p.group]+'</span></div><div class="m">หมู่ '+esc(p.moo)+' · '+thDs(a.date)+' · '+esc(a.message)+'</div>'+
+    (done?'<div class="m">✅ '+esc(a.follow_how)+' — '+esc(a.follow_note)+' ('+esc(a.follow_by)+')</div>':'<div class="act" id="act-'+esc(a.alert_id)+'"><button class="btn pri" onclick="followUp(\''+esc(a.alert_id)+'\')">บันทึกการติดตาม</button><button class="btn" onclick="openPt(\''+esc(a.patient_id)+'\')">ดูข้อมูล</button></div>')+'</div>'}).join(''):'<p class="muted">ไม่มีรายการที่ต้องติดตาม 🎉</p>';
+  h+='</div></div><div><div class="panel"><h2>👥 รายชื่อผู้ป่วย <span class="r">กดชื่อเพื่อดูรายละเอียด</span></h2><div class="tbl"><table><tr><th>ชื่อ</th><th>กลุ่ม</th><th>หมู่</th><th>วันนี้</th><th>บันทึก 7 วัน</th><th>ทำได้ตามเป้า</th><th>ผลตรวจล่าสุด</th><th>🚩</th></tr>';
+  h+=P.length?P.map(p=>{const lab=p.lastLab;const lh=lab?'<span class="pill '+(lab.type==='eGFR'?egCls(lab.value):a1cCls(lab.value))+'">'+(lab.type==='eGFR'?'eGFR '+lab.value:'A1c '+lab.value+'%')+'</span>':'-';
+    return '<tr class="click" onclick="openPt(\''+esc(p.patient_id)+'\')"><td>'+esc(p.name)+'</td><td><span class="pill p-'+p.group+'">'+GN[p.group]+'</span></td><td>'+esc(p.moo)+'</td><td>'+(p.recToday?'✅':(p.noRecDays>=3?'<span class="pill p-red">ขาด '+p.noRecDays+' วัน</span>':'<span class="pill p-gry">ยัง</span>'))+'</td>'+
+    '<td><span class="bar"><i style="width:'+(p.rec7/7*100)+'%;background:'+(p.rec7>=5?'#2e9e6b':p.rec7>=3?'#e8a317':'#d0442c')+'"></i></span>'+p.rec7+'/7</td>'+
+    '<td><span class="bar"><i style="width:'+p.goalPct+'%;background:'+(p.goalPct>=70?'#2e9e6b':p.goalPct>=50?'#e8a317':'#d0442c')+'"></i></span>'+p.goalPct+'%</td><td>'+lh+'</td><td>'+(p.openAlerts?'<span class="pill p-red">'+p.openAlerts+'</span>':'')+'</td></tr>'}).join(''):'<tr><td colspan="8" class="muted">ยังไม่มีผู้ป่วย — เริ่มที่แท็บ ➕ ลงทะเบียน</td></tr>';
+  h+='</table></div></div></div></div>';
+  $('ovBody').innerHTML=h;
+}
+function followUp(aid){
+  $('act-'+aid).innerHTML='<select id="fu-how"><option>โทรศัพท์</option><option>เยี่ยมบ้าน</option><option>ส่ง อสม. เยี่ยม</option><option>นัดมา รพ.สต.</option><option>ส่งต่อ รพ.แม่ข่าย</option></select><input id="fu-note" maxlength="300" placeholder="สรุปการติดตาม/คำแนะนำ" style="flex:1;min-width:180px"><button class="btn pri" id="fu-btn" onclick="saveFu(\''+aid+'\')">บันทึก</button><button class="btn" onclick="renderOv()">ยกเลิก</button><div class="err" id="fu-err" style="width:100%"></div>';
+  $('fu-note').focus();
+}
+async function saveFu(aid){
+  const how=$('fu-how').value,note=$('fu-note').value.trim();
+  if(!note){$('fu-err').textContent='กรุณาพิมพ์สรุปการติดตามก่อนบันทึก';return}
+  $('fu-btn').disabled=true;
+  try{await api('followUp',{alert_id:aid,how,note});const a=OV.alerts.find(x=>x.alert_id===aid);Object.assign(a,{status:'done',follow_how:how,follow_note:note,follow_by:SNAME});
+    const p=byId(a.patient_id);if(p)p.openAlerts=Math.max(0,p.openAlerts-1);delete PCACHE[a.patient_id];toast('บันทึกการติดตามแล้ว');renderOv()}
+  catch(e){$('fu-err').textContent=e.message;$('fu-btn').disabled=false}
+}
+
+/* ---------- รายบุคคล ---------- */
+$('ptSel').onchange=()=>{if($('ptSel').value)loadPt($('ptSel').value)};
+function openPt(id){go('pt');$('ptSel').value=id;loadPt(id)}
+async function getPt(id,force){if(!PCACHE[id]||force)PCACHE[id]=await api('patient',{patient_id:id});return PCACHE[id]}
+async function loadPt(id){
+  $('ptBody').innerHTML='<div class="spin"></div>';
+  try{renderPt(await getPt(id,true))}catch(e){$('ptBody').innerHTML='<div class="panel"><p class="err">'+esc(e.message)+'</p></div>'}
+}
+const METRICS={
+  water:(p,l)=>num(l.water)>=num(p.water_goal||8),move:(p,l)=>num(l.move_min)>=num(p.move_goal||30),med:(p,l)=>l.med==='ครบ',
+  salt:(p,l)=>!(num(l.soup_lv)>=2||num(l.dip_lv)>=2||num(l.season)===1),carb:(p,l)=>!(num(l.rice)>2||num(l.sweet)===1),
+  nsaid:(p,l)=>!(num(l.nsaid)===1),hypo:(p,l)=>!(num(l.hypo)===1||(num(l.dtx)>0&&num(l.dtx)<70))
+};
+function renderPt(D){
+  const p=D.patient,ck=p.group==='ckd',logs={};(D.last14||[]).forEach(l=>logs[l.date]=l);
+  const base=new Date(((OV&&OV.today)||ymd(new Date()))+'T12:00:00');const days=Array.from({length:14},(_,i)=>{const d=new Date(base);d.setDate(base.getDate()-(13-i));return ymd(d)}); // ใช้วันที่ของเซิร์ฟเวอร์ (เวลาไทย)
+  const open=(D.alerts||[]).filter(a=>a.status==='open');
+  let h='<div class="panel"><div class="ph"><h2>'+esc(p.name)+'</h2><span class="pill p-'+p.group+'">'+GN[p.group]+'</span><span class="muted">'+esc(p.patient_id)+' · อายุ '+esc(p.age)+' ปี · หมู่ '+esc(p.moo)+' · '+esc(p.recorder)+(p.osm?' · อสม. '+esc(p.osm):'')+(p.phone?' · ☎ '+esc(p.phone):'')+' · เริ่ม '+thD(p.start_date)+'</span>'+
+    '<button class="btn" style="margin-left:auto" onclick="showQR(\''+esc(p.patient_id)+'\')">🔳 QR ลิงก์ส่วนตัว</button></div>';
+  if(open.length)h+='<div style="margin-top:8px">'+open.map(a=>'<span class="pill p-red" style="margin:2px">🚩 '+esc(a.message)+'</span>').join('')+'</div>';
+  h+='<div id="ptQR"></div></div><div class="grid2"><div>';
+  h+='<div class="panel"><h2>🎯 เป้าหมายรายบุคคล</h2><div class="goalrow"><label>💧 ดื่มน้ำ (แก้ว/วัน)</label><input id="gW" value="'+esc(p.water_goal)+'" inputmode="numeric"></div><div class="goalrow"><label>🚶 ออกแรง (นาที/วัน)</label><input id="gM" value="'+esc(p.move_goal)+'" inputmode="numeric"></div>'+
+    '<div class="goalrow"><label>📅 เป้าสัปดาห์นี้</label><span>'+(D.goal?esc(String(D.goal).split('|').pop()):'<span class="muted">ผู้ป่วยยังไม่ได้เลือก</span>')+'</span></div><button class="btn pri" id="gBtn" onclick="saveGoals(\''+esc(p.patient_id)+'\')">บันทึกเป้าหมาย</button><div class="err" id="gErr"></div></div>';
+  const tl=ck?'eGFR':'HbA1c',L=(D.labs||[]).filter(l=>l.type===tl);
+  h+='<div class="panel"><h2>🧪 '+(ck?'ค่าไต eGFR':'น้ำตาลสะสม HbA1c')+' <span class="r">ทุก 3 เดือน</span></h2><div class="labs">'+
+    (L.length?L.map((l,i)=>'<div class="'+(ck?egCls(l.value):a1cCls(l.value))+'">'+(i===0?'ก่อนเริ่ม':'ครั้งที่ '+(i+1))+'<b>'+l.value+(ck?'':'%')+'</b>'+(ck?egStage(l.value)+'<br>':'')+thD(l.date)+'</div>').join('')+'<div class="p-gry">ครั้งถัดไป<b>—</b>~'+thD(ymd(new Date(new Date(L[L.length-1].date+'T12:00:00').getTime()+90*864e5)))+'</div>':'<span class="muted">ยังไม่มีผล</span>')+
+    '</div><button class="btn" style="margin-top:10px" onclick="labFor(\''+esc(p.patient_id)+'\',\''+tl+'\')">+ บันทึกผล '+tl+'</button></div>';
+  if(ck){const S=(D.labs||[]).filter(l=>l.type==='salt');h+='<div class="panel"><h2>🧂 ความเค็มแกง (CHEM METER)</h2><div class="labs">'+(S.length?S.map(s=>'<div class="'+saltCls(s.value)+'">'+thDs(s.date)+'<b>'+s.value.toFixed(2)+'%</b>'+saltTxt(s.value)+'</div>').join(''):'<span class="muted">ยังไม่มีผลวัด</span>')+'</div><button class="btn" style="margin-top:10px" onclick="labFor(\''+esc(p.patient_id)+'\',\'salt\')">+ บันทึกค่าความเค็ม</button></div>'}
+  h+='<div class="panel"><h2>📝 บันทึกการให้คำแนะนำ</h2><textarea id="nT" rows="2" maxlength="500" style="width:100%" placeholder="เช่น คุยเรื่องอุปสรรค ตั้งแผน ถ้า...จะ..."></textarea><button class="btn pri" id="nBtn" style="margin:6px 0 10px" onclick="addNote(\''+esc(p.patient_id)+'\')">เพิ่มบันทึก</button><div class="err" id="nErr"></div>'+
+    ((D.notes||[]).length?D.notes.map(n=>'<div class="note"><div class="d">'+thD(n.datetime)+' · '+esc(n.by)+'</div>'+esc(n.text)+'</div>').join(''):'<p class="muted">ยังไม่มีบันทึก</p>')+'</div>';
+  h+='</div><div>';
+  const rows=[['💧 น้ำครบเป้า','water'],['🚶 ออกแรงครบเป้า','move'],['💊 กินยาครบ','med'],ck?['🧂 คุมเค็ม','salt']:['🍙 คุมแป้ง/หวาน','carb'],ck?['⚠️ ไม่ใช้ยาแก้ปวด','nsaid']:['⚠️ ไม่มีน้ำตาลต่ำ','hypo']];
+  const recN=days.filter(d=>logs[d]).length;
+  h+='<div class="panel"><h2>🗓️ พฤติกรรม 14 วันล่าสุด <span class="r">บันทึก '+recN+'/14 วัน · ต่อเนื่อง '+(D.streak||0)+' วัน</span></h2><div class="tbl"><table class="heat"><tr><th></th>'+days.map(d=>'<th>'+Number(d.slice(8))+'</th>').join('')+'</tr>'+
+    rows.map(([n,k])=>'<tr><td class="lbl">'+n+'</td>'+days.map(d=>{const l=logs[d];return '<td class="c '+(!l?'hn':(METRICS[k](p,l)?'h1':'h0'))+'" title="'+thDs(d)+'"></td>'}).join('')+'</tr>').join('')+
+    '</table></div><div class="legend"><span class="l1">ทำได้/ปกติ</span><span class="l0">ไม่ได้/มีเหตุการณ์</span><span class="ln">ไม่ได้บันทึก</span></div>';
+  const lastLog=D.last14&&D.last14.length?D.last14[D.last14.length-1]:null;
+  if(lastLog){const meals=(()=>{try{return JSON.parse(lastLog.meals_json||'[]')}catch(e){return[]}})();
+    h+='<div style="margin-top:10px;font-size:14px;background:#f5faf7;border-radius:10px;padding:8px 10px"><b>บันทึกล่าสุด '+thDs(lastLog.date)+'</b> ('+esc(lastLog.recorder)+')<br>'+
+    (meals.length?'🍲 '+meals.map(m=>esc(m.meal)+': '+(m.items||[]).length+' เมนู'+(m.other?' + '+esc(m.other):'')).join(' · ')+'<br>':'')+
+    '💧 '+num(lastLog.water)+' แก้ว · 🚶 '+num(lastLog.move_min)+' นาที '+(lastLog.move_types?'('+esc(lastLog.move_types)+')':'')+' · 💊 '+esc(lastLog.med||'-')+
+    (ck?'<br>🥣 ซดน้ำแกง ระดับ '+esc(lastLog.soup_lv)+' · 🌶️ จ้ำ ระดับ '+esc(lastLog.dip_lv)+(num(lastLog.nsaid)?' · ⚠️ ยาแก้ปวด: '+esc(lastLog.nsaid_types):'')+(num(lastLog.herb)?' · 🌿 สมุนไพร':'')+(lastLog.bp?' · ❤️ '+esc(lastLog.bp):'')
+      :'<br>🍙 ข้าวเหนียว '+num(lastLog.rice)+' ปั้น · 🥤 น้ำหวาน '+(num(lastLog.sweet)?'ดื่ม':'ไม่ดื่ม')+(lastLog.dtx?' · 🩸 DTX '+esc(lastLog.dtx):'')+(lastLog.weight?' · ⚖️ '+esc(lastLog.weight)+' กก.':''))+'</div>';}
+  h+='</div>';
+  if(ck){const bp=(D.last14||[]).filter(l=>/^\d+\//.test(String(l.bp)));h+='<div class="panel"><h2>❤️ ความดันตัวบน (ที่ผู้ป่วยบันทึก)</h2>'+(bp.length>1?lineChart(bp.map(l=>+String(l.bp).split('/')[0]),{min:90,max:190,refs:[{v:130,l:'130',c:'#0f7a5c'}],xl:[thDs(bp[0].date),thDs(bp[bp.length-1].date)],pts:1}):'<p class="muted">ข้อมูลยังไม่พอ</p>')+'</div>'}
+  else{const w=(D.labs||[]).filter(l=>l.type==='weight').map(l=>({d:l.date,v:l.value})).concat((D.last14||[]).filter(l=>num(l.weight)>0).map(l=>({d:l.date,v:num(l.weight)}))).sort((a,b)=>a.d<b.d?-1:1);
+    if(w.length){const b0=w[0].v,lw=w[w.length-1].v;h+='<div class="panel"><h2>⚖️ น้ำหนัก <span class="r">เริ่ม '+b0+' → ล่าสุด '+lw+' กก. (ลด '+(b0-lw).toFixed(1)+')</span></h2>'+(w.length>1?lineChart(w.map(x=>x.v),{min:Math.floor(b0-17),max:Math.ceil(Math.max(...w.map(x=>x.v))+2),refs:[{v:b0-10,l:'−10',c:'#e8a317'},{v:b0-15,l:'−15',c:'#0f7a5c'}],xl:[thDs(w[0].d),thDs(w[w.length-1].d)]}):'<p class="muted">ข้อมูลยังไม่พอ</p>')+'</div>'}
+    const dt=(D.last14||[]).filter(l=>num(l.dtx)>0);h+='<div class="panel"><h2>🩸 DTX ที่ผู้ป่วยบันทึก</h2>'+(dt.length>1?lineChart(dt.map(l=>num(l.dtx)),{min:40,max:300,refs:[{v:70,l:'70',c:'#d0442c'},{v:180,l:'180',c:'#e8a317'}],xl:[thDs(dt[0].date),thDs(dt[dt.length-1].date)],pts:1}):'<p class="muted">ข้อมูลยังไม่พอ</p>')+'</div>'}
+  h+='</div></div>';
+  $('ptBody').innerHTML=h;
+}
+async function saveGoals(id){
+  const w=+$('gW').value,m=+$('gM').value;
+  if(!(w>=1&&w<=20)||!(m>=0&&m<=180)){$('gErr').textContent='กรุณากรอกตัวเลขให้ถูกต้อง (น้ำ 1–20 แก้ว, ออกแรง 0–180 นาที)';return}
+  $('gBtn').disabled=true;try{await api('saveGoals',{patient_id:id,water_goal:w,move_goal:m});toast('บันทึกเป้าหมายแล้ว ผู้ป่วยจะเห็นเป้าใหม่ในแอป');loadPt(id)}catch(e){$('gErr').textContent=e.message;$('gBtn').disabled=false}
+}
+async function addNote(id){
+  const t=$('nT').value.trim();if(!t){$('nErr').textContent='กรุณาพิมพ์บันทึกก่อน';return}
+  $('nBtn').disabled=true;try{await api('saveNote',{patient_id:id,text:t});toast('เพิ่มบันทึกแล้ว');loadPt(id)}catch(e){$('nErr').textContent=e.message;$('nBtn').disabled=false}
+}
+
+/* ---------- QR ---------- */
+const appUrl=tok=>location.href.split(/[?#]/)[0].replace(/[^/]*$/,'')+'index.html?t='+encodeURIComponent(tok);
+function qrBlock(p,boxId){
+  const url=appUrl(p.token);
+  $(boxId).innerHTML='<div class="qrbox"><div id="'+boxId+'-c"></div><div style="flex:1;min-width:240px"><b>🔳 ลิงก์ส่วนตัวของ '+esc(p.name)+' ('+esc(p.patient_id)+')</b><ol style="margin:6px 0 0 20px;font-size:15px"><li>สแกน QR ด้วยกล้องมือถือผู้ป่วย</li><li>กด "เพิ่มไปยังหน้าจอหลัก"</li><li>ลองบันทึกครั้งแรกด้วยกัน</li></ol><code>'+esc(url)+'</code>'+
+    '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" onclick="copyUrl(\''+esc(url)+'\')">📋 คัดลอกลิงก์ (ส่งทาง LINE)</button><button class="btn" onclick="printQR(\''+esc(p.patient_id)+'\')">🖨️ พิมพ์บัตร QR</button></div>'+
+    '<p class="muted" style="margin-top:6px">⚠️ ลิงก์นี้คือกุญแจเข้าข้อมูลของผู้ป่วย ส่งให้ผู้ป่วย/ญาติเท่านั้น</p></div></div>';
+  makeQR($(boxId+'-c'),url,150);
+}
+function makeQR(el,text,size){try{new QRCode(el,{text,width:size,height:size,correctLevel:QRCode.CorrectLevel.M})}catch(e){el.textContent='[โหลด QR ไม่ได้ — ใช้ลิงก์แทน]'}}
+async function showQR(id){try{const D=await getPt(id);qrBlock(D.patient,'ptQR')}catch(e){toast(e.message)}}
+const QRP={};
+function printQR(id){
+  const p=(PCACHE[id]&&PCACHE[id].patient)||QRP[id];if(!p)return;
+  $('printArea').innerHTML='<div class="pcard"><div style="font-size:30px">🩺</div><h3>บันทึกสุขภาพประจำวัน</h3><p>'+esc(p.name)+'</p><p>'+GN[p.group]+'</p><div id="pqr"></div><p>สแกนแล้วกด "เพิ่มไปยังหน้าจอหลัก"</p><p style="font-size:13px">รพ.สต.บ้านนาเพียงใหม่</p></div>';
+  makeQR($('pqr'),appUrl(p.token),200);setTimeout(()=>window.print(),300);
+}
+async function copyUrl(u){try{await navigator.clipboard.writeText(u);toast('คัดลอกลิงก์แล้ว')}catch(e){toast('คัดลอกไม่ได้ กรุณากดค้างที่ลิงก์เพื่อคัดลอก')}}
+
+/* ---------- บันทึกผลตรวจ ---------- */
+const LT={HbA1c:{n:'HbA1c (%)',min:4,max:15,g:'dm'},eGFR:{n:'eGFR (mL/min/1.73m²)',min:3,max:150,g:'ckd'},salt:{n:'ค่าความเค็ม CHEM METER (%)',min:0,max:3,g:'ckd'},weight:{n:'น้ำหนัก (กก.)',min:30,max:200,g:'all'}};
+const recent=[];
+$('labDate').value=ymd(new Date());
+$('labPt').onchange=fillTypes;$('labType').onchange=labPrev;$('labVal').oninput=labPrev;
+async function fillTypes(){
+  const id=$('labPt').value,p=byId(id);if(!p){$('labType').innerHTML='';$('labPrev').innerHTML='';return}
+  const ts=Object.keys(LT).filter(k=>LT[k].g==='all'||LT[k].g===p.group),cur=$('labType').value;
+  $('labType').innerHTML=ts.map(k=>'<option value="'+k+'">'+LT[k].n+'</option>').join('');if(ts.includes(cur))$('labType').value=cur;
+  try{await getPt(id)}catch(e){}labPrev();
+}
+async function labFor(id,t){go('lab');$('labPt').value=id;await fillTypes();$('labType').value=t;$('labVal').value='';labPrev();$('labVal').focus()}
+function labPrev(){
+  const id=$('labPt').value,t=$('labType').value,v=parseFloat($('labVal').value);$('labErr').textContent='';
+  if(!t){return}$('labValLbl').textContent=LT[t].n;
+  if(isNaN(v)){$('labPrev').innerHTML='';return}
+  const D=PCACHE[id],prev=D?(D.labs||[]).filter(l=>l.type===t).pop():null;let c='p-grn',txt='',warn='';
+  if(t==='HbA1c'){c=a1cCls(v);txt=v<7?'🟢 ต่ำกว่า 7%':v<8?'🟡 7–7.9%':'🔴 8% ขึ้นไป';if(v<6.5)warn='ต่ำกว่า 6.5% — พิจารณาประเมินระยะสงบ/ลดยาร่วมกับแพทย์';if(prev&&v>=prev.value)warn='ไม่ลดลงจากครั้งก่อน — ระบบจะขึ้น 🚩';}
+  if(t==='eGFR'){c=egCls(v);txt=egStage(v);if(prev&&prev.value-v>2)warn='ลดลง '+(prev.value-v)+' จากครั้งก่อน — ระบบจะขึ้น 🚩 นัดคุยหาสาเหตุ';}
+  if(t==='salt'){c=saltCls(v);txt=saltTxt(v);if(v>0.9)warn='เค็มมาก — ระบบจะขึ้น 🚩';}
+  if(v<LT[t].min||v>LT[t].max){c='p-red';warn='ค่าอยู่นอกช่วงที่เป็นไปได้ ('+LT[t].min+'–'+LT[t].max+')';}
+  $('labPrev').innerHTML='<div class="preview '+c+'"><b>'+v+'</b> '+txt+(prev?' · ครั้งก่อน '+prev.value+' ('+thD(prev.date)+')':'')+(warn?'<br>⚠️ '+warn:'')+'</div>';
+}
+async function saveLab(){
+  const id=$('labPt').value,t=$('labType').value,v=parseFloat($('labVal').value),d=$('labDate').value;
+  if(!id){$('labErr').textContent='กรุณาเลือกผู้ป่วย';return}
+  if(isNaN(v)){$('labErr').textContent='กรุณากรอกค่า';return}
+  if(v<LT[t].min||v>LT[t].max){$('labErr').textContent='ค่าอยู่นอกช่วงที่เป็นไปได้ ('+LT[t].min+'–'+LT[t].max+') กรุณาตรวจสอบ';return}
+  if(!d){$('labErr').textContent='กรุณาเลือกวันที่';return}
+  if(d>ymd(new Date())){$('labErr').textContent='วันที่ตรวจต้องไม่เกินวันนี้';return}
+  $('labBtn').disabled=true;
+  try{const r=await api('saveLab',{patient_id:id,type:t,value:v,date:d});recent.unshift({p:byId(id).name,t:LT[t].n,v,d,a:(r.alerts||[]).join(', ')});
+    delete PCACHE[id];await getPt(id).catch(()=>{});$('labVal').value='';labPrev();renderRecent();toast('บันทึกผลแล้ว'+((r.alerts||[]).length?' — มีแจ้งเตือน 🚩':''));loadOv()}
+  catch(e){$('labErr').textContent=e.message}
+  $('labBtn').disabled=false;
+}
+function renderRecent(){$('labRecent').innerHTML='<tr><th>วันที่ตรวจ</th><th>ผู้ป่วย</th><th>รายการ</th><th>ค่า</th><th>แจ้งเตือน</th></tr>'+(recent.length?recent.map(r=>'<tr><td>'+thD(r.d)+'</td><td>'+esc(r.p)+'</td><td>'+esc(r.t)+'</td><td><b>'+r.v+'</b></td><td>'+(r.a?'🚩 '+esc(r.a):'-')+'</td></tr>').join(''):'<tr><td colspan="5" class="muted">ยังไม่มีการบันทึกในรอบนี้</td></tr>')}
+
+/* ---------- ลงทะเบียน ---------- */
+$('rLabDate').value=ymd(new Date());
+function regLabel(){const dm=$('rGrp').value==='dm';$('rLabName').textContent=dm?'HbA1c (%)':'eGFR';$('rWtReq').textContent=dm?'*':''}
+$('rGrp').onchange=regLabel;regLabel();
+async function register(){
+  const g=$,err=$('rErr');
+  const d={name:g('rName').value.trim(),age:+g('rAge').value,moo:g('rMoo').value,group:g('rGrp').value,recorder:g('rRec').value,osm:g('rOsm').value.trim(),phone:g('rPhone').value.trim(),
+    baseline_lab:parseFloat(g('rLab').value),lab_date:g('rLabDate').value,weight:g('rWt').value?parseFloat(g('rWt').value):'',water_goal:+g('rWater').value||8,move_goal:+g('rMove').value||30,consent:g('rConsent').checked};
+  if(!d.name){err.textContent='กรุณากรอกชื่อ-สกุล';return}
+  if(!(d.age>=18&&d.age<=100)){err.textContent='กรุณากรอกอายุให้ถูกต้อง (18–100)';return}
+  if(isNaN(d.baseline_lab)){err.textContent='กรุณากรอกผลตรวจก่อนเริ่ม ('+(d.group==='ckd'?'eGFR':'HbA1c')+') เพื่อใช้เป็นค่าตั้งต้น';return}
+  if(d.group==='dm'&&!(d.weight>=30)){err.textContent='กลุ่มลดหวานลดพุง ต้องกรอกน้ำหนักเริ่มต้น';return}
+  if(!d.consent){err.textContent='ต้องได้รับความยินยอมจากผู้ป่วยก่อนลงทะเบียน';return}
+  if(OV&&OV.patients.some(p=>p.name.replace(/\s/g,'')===d.name.replace(/\s/g,''))&&!confirm('มีชื่อนี้ในระบบแล้ว ต้องการลงทะเบียนซ้ำหรือไม่?'))return;
+  err.textContent='';$('rBtn').disabled=true;
+  try{const r=await api('register',{data:d});const p={patient_id:r.patient_id,token:r.token,name:d.name,group:d.group};QRP[r.patient_id]=p;
+    qrBlock(p,'qrOut');['rName','rAge','rLab','rWt','rOsm','rPhone'].forEach(x=>g(x).value='');g('rConsent').checked=false;toast('ลงทะเบียน '+d.name+' แล้ว');loadOv()}
+  catch(e){err.textContent=e.message}
+  $('rBtn').disabled=false;
+}
+
+/* ---------- ทั่วไป ---------- */
+function lineChart(v,o){const W=520,H=200,pl=40,pr=46,pt=12,pb=26,iw=W-pl-pr,ih=H-pt-pb;
+  const x=i=>pl+(v.length===1?0:i*iw/(v.length-1)),y=val=>pt+ih-(Math.max(o.min,Math.min(o.max,val))-o.min)/(o.max-o.min)*ih;
+  let s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" font-family="Sarabun,sans-serif">';
+  for(let k=0;k<=4;k++){const val=o.min+(o.max-o.min)*k/4,yy=y(val);s+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+yy+'" y2="'+yy+'" stroke="#eef3f0"/><text x="'+(pl-6)+'" y="'+(yy+4)+'" font-size="12" fill="#8a9893" text-anchor="end">'+Math.round(val)+'</text>'}
+  (o.refs||[]).forEach(r=>{const yy=y(r.v);s+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+yy+'" y2="'+yy+'" stroke="'+r.c+'" stroke-width="2" stroke-dasharray="6 5"/><text x="'+(W-pr+5)+'" y="'+(yy+4)+'" font-size="13" font-weight="700" fill="'+r.c+'">'+r.l+'</text>'});
+  s+='<polyline fill="none" stroke="#1d6fb0" stroke-width="2.5" points="'+v.map((val,i)=>x(i)+','+y(val)).join(' ')+'"/>';
+  v.forEach((val,i)=>{if(o.pts||i===v.length-1)s+='<circle cx="'+x(i)+'" cy="'+y(val)+'" r="'+(i===v.length-1?5:3)+'" fill="#1d6fb0"/>'});
+  s+='<text x="'+x(v.length-1)+'" y="'+(y(v[v.length-1])-10)+'" font-size="14" font-weight="700" fill="#1d6fb0" text-anchor="end">'+v[v.length-1]+'</text>';
+  if(o.xl)s+='<text x="'+pl+'" y="'+(H-6)+'" font-size="12" fill="#8a9893">'+o.xl[0]+'</text><text x="'+(W-pr)+'" y="'+(H-6)+'" font-size="12" fill="#8a9893" text-anchor="end">'+o.xl[1]+'</text>';
+  return s+'</svg>'}
+function go(v){document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id==='v-'+v));if(v==='lab')renderRecent();window.scrollTo(0,0)}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3000)}
+if(SESSION)start();else{$('loginBox').style.display='block';$('lName').value=localStorage.getItem('sname')||''}
+$('lName').onchange=()=>{try{localStorage.setItem('sname',$('lName').value.trim())}catch(e){}};
+</script>
+</body>
+</html>
