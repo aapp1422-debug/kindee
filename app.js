@@ -82,7 +82,7 @@ function restore(l) {
   S.med = l.med || null;
   String(l.nsaid_types || '').split(',').filter(Boolean).forEach(n => S.nsaidList.add(n));
   ['soup_lv', 'dip_lv', 'season', 'sweet', 'nsaid', 'herb', 'hypo'].forEach(k => { if (l[k] !== '' && l[k] != null) S.v[k] = num(l[k]); });
-  if (l.bp) $('bp').value = l.bp; if (l.dtx) $('dtx').value = l.dtx; if (l.weight) $('wt').value = l.weight;
+  if (l.bp) { const b = String(l.bp).split('/'); $('bpS').value = b[0] || ''; $('bpD').value = b[1] || ''; } if (l.dtx) $('dtx').value = l.dtx; if (l.weight) $('wt').value = l.weight;
 }
 const num = v => (v === '' || v == null || isNaN(Number(v))) ? 0 : Number(v);
 
@@ -162,14 +162,14 @@ function buildLog() {
   ['soup_lv', 'dip_lv', 'season', 'sweet', 'nsaid', 'herb', 'hypo'].forEach(k => { if (k in S.v) log[k] = S.v[k]; });
   if (GROUP === 'dm') log.rice = S.rice;
   if (S.v.nsaid === 1) log.nsaid_types = [...S.nsaidList].join(',');
-  const bp = $('bp').value.trim(), dtx = $('dtx').value.trim(), wt = $('wt').value.trim();
+  const bs = $('bpS').value.trim(), bd = $('bpD').value.trim(), bp = (bs || bd) ? bs + '/' + bd : '', dtx = $('dtx').value.trim(), wt = $('wt').value.trim();
   if (GROUP === 'ckd' && bp) log.bp = bp;
   if (GROUP === 'dm' && dtx) log.dtx = Number(dtx);
   if (GROUP === 'dm' && wt) log.weight = Number(wt);
   return log;
 }
 function validate(log) {
-  if (log.bp && !/^\d{2,3}\/\d{2,3}$/.test(log.bp)) return 'ความดันให้พิมพ์แบบ 130/80';
+  if (log.bp) { const [s, d] = log.bp.split('/').map(Number); if (!s || !d) return 'กรอกความดันให้ครบทั้งตัวบนและตัวล่าง'; if (!(s >= 70 && s <= 250) || !(d >= 40 && d <= 150) || d >= s) return 'ค่าความดันไม่ถูกต้อง ตัวบน 70–250 ตัวล่าง 40–150'; }
   if (log.dtx && !(log.dtx >= 20 && log.dtx <= 600)) return 'ค่าน้ำตาลปลายนิ้วไม่ถูกต้อง (20–600)';
   if (log.weight && !(log.weight >= 30 && log.weight <= 200)) return 'น้ำหนักไม่ถูกต้อง (30–200 กก.)';
   return '';

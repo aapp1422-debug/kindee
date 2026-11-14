@@ -85,13 +85,13 @@
   <div class="row"><span>วันนี้กินยาแก้ปวด หรือไปฉีดยาไหม</span><div class="yn" data-q="nsaid"><button data-v="0">ไม่</button><button data-v="1">ใช่</button></div></div>
   <div class="sub-q" id="nsaidSub"><div class="hint" style="margin:0 0 6px">เป็นยาอะไร (แตะเลือก)</div><div class="grid" id="nsaidGrid"></div></div>
   <div class="row"><span>กินสมุนไพร ยาหม้อ อาหารเสริมไหม</span><div class="yn" data-q="herb"><button data-v="0">ไม่</button><button data-v="1">ใช่</button></div></div>
-  <div class="row"><span>ความดันวันนี้ (ถ้าวัด)</span><span><input class="num" id="bp" placeholder="130/80" inputmode="numeric" style="width:120px" maxlength="7"></span></div>
+  <div class="row"><span>ความดันวันนี้ (ถ้าวัด)</span><span style="display:flex;align-items:center;gap:6px"><input class="num" id="bpS" placeholder="บน" inputmode="numeric" pattern="[0-9]*" maxlength="3" style="width:76px"><b style="font-size:24px">/</b><input class="num" id="bpD" placeholder="ล่าง" inputmode="numeric" pattern="[0-9]*" maxlength="3" style="width:76px"></span></div>
 </section>
 
 <section class="card warn only-dm" id="c-hypo">
   <h2>⚠️ ระวังน้ำตาลต่ำ <span class="ok">✔ แล้ว</span></h2>
   <div class="row"><span>มีอาการใจสั่น เหงื่อออก หน้ามืด หิวมาก ไหม</span><div class="yn" data-q="hypo"><button data-v="0">ไม่มี</button><button data-v="1">มี</button></div></div>
-  <div class="row"><span>ค่าน้ำตาลปลายนิ้ว (ถ้าเจาะ)</span><span><input class="num" id="dtx" placeholder="mg/dL" inputmode="numeric" maxlength="3"></span></div>
+  <div class="row"><span>ค่าน้ำตาลปลายนิ้ว (ถ้าเจาะ)</span><span><input class="num" id="dtx" placeholder="mg/dL" inputmode="numeric" pattern="[0-9]*" maxlength="3"></span></div>
   <div class="row"><span>⚖️ น้ำหนักวันนี้<br><small style="color:#5b6b64">ชั่งตอนเช้า หลังเข้าห้องน้ำ</small></span><span><input class="num" id="wt" placeholder="กก." inputmode="decimal" maxlength="5"></span></div>
 </section>
 </div>
