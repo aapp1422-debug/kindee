@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f7a5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="บันทึกสุขภาพ">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" id="manifestLink" href="manifest.json">
+<title>บันทึกสุขภาพ รพ.สต.บ้านนาเพียงใหม่</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="ckd">
+<div class="offline" id="offlineBar">📶 ไม่มีอินเทอร์เน็ต — บันทึกไว้ในเครื่องก่อน จะส่งให้อัตโนมัติเมื่อมีสัญญาณ</div>
+
+<div class="boot" id="boot"><span class="em">🩺</span>กำลังโหลด...<div class="spin"></div></div>
+
+<!-- ================= บันทึกวันนี้ ================= -->
+<div class="app" id="vLog" style="display:none">
+<header>
+  <h1 id="hello">สวัสดีค่ะ</h1>
+  <div class="sub" id="today"></div>
+  <div><span class="streak" id="grpBadge"></span> <span class="streak" id="streakBadge"></span></div>
+  <div class="prog"><i id="progBar"></i></div>
+  <div class="sub" style="margin-top:4px;font-size:15px" id="progTxt">บันทึกแล้ว 0 จาก 5 หมวด</div>
+</header>
+
+<section class="card" id="c-food">
+  <h2>🍲 วันนี้กินอะไร <span class="ok">✔ แล้ว</span></h2>
+  <div class="hint">เลือกมื้อ แล้วแตะเมนูที่กิน (เลือกได้หลายอย่าง)</div>
+  <div class="tabs" id="mealTabs"><button class="on" data-m="0">เช้า</button><button data-m="1">กลางวัน</button><button data-m="2">เย็น</button></div>
+  <div class="grid" id="foodGrid"></div>
+  <div class="other" id="otherBox">
+    <div class="hint" style="margin:0 0 4px">✏️ พิมพ์เมนูอื่นที่กินมื้อนี้ (เช่น แกงเห็ด, ต้มไก่บ้าน)</div>
+    <textarea id="otherTxt" maxlength="200" placeholder="พิมพ์ชื่ออาหาร..."></textarea>
+  </div>
+  <div style="margin-top:12px">
+    <div class="row"><span>🥬 ผักทั้งวัน (กำมือ)</span><div class="step"><button onclick="stepV('veg',-1)">−</button><b id="veg">0</b><button onclick="stepV('veg',1)">+</button></div></div>
+    <div class="row" style="display:none" id="riceRow"><span>🍙 ข้าวเหนียวทั้งวัน (ปั้น)</span><div class="step"><button onclick="stepV('rice',-1)">−</button><b id="rice">0</b><button onclick="stepV('rice',1)">+</button></div></div>
+  </div>
+  <div class="only-ckd" style="margin-top:6px">
+    <div class="lvq"><div class="q">🥣 ซดน้ำแกง น้ำต้ม มากแค่ไหน</div>
+      <div class="lv" data-q="soup_lv" style="grid-template-columns:repeat(4,1fr)">
+        <button data-v="0"><span class="em">🚫</span>ไม่ซด</button><button data-v="1"><span class="em">🥄</span>นิดหน่อย</button><button data-v="2" data-hi="1"><span class="em">🥣</span>ครึ่งถ้วย</button><button data-v="3" data-hi="1"><span class="em">🍲</span>หมดถ้วย</button>
+      </div></div>
+    <div class="lvq"><div class="q">🌶️ จ้ำน้ำพริก จ้ำแจ่ว จ้ำปลาร้า มากแค่ไหน</div>
+      <div class="lv" data-q="dip_lv" style="grid-template-columns:repeat(3,1fr)">
+        <button data-v="0"><span class="em">🚫</span>ไม่ได้จ้ำ</button><button data-v="1"><span class="em">🤏</span>จ้ำนิดหน่อย<br>บางคำ</button><button data-v="2" data-hi="1"><span class="em">🥢</span>จ้ำเกือบ<br>ทุกคำ</button>
+      </div></div>
+    <div class="row" style="border-top:1px dashed #e2ebe6"><span>เติมผงปรุง น้ำปลา ปลาร้าเพิ่มไหม</span><div class="yn" data-q="season"><button data-v="0">ไม่</button><button data-v="1">เติม</button></div></div>
+  </div>
+  <div class="only-dm" style="margin-top:6px">
+    <div class="row"><span>ดื่มน้ำหวาน น้ำอัดลม กาแฟ 3in1 ไหม</span><div class="yn" data-q="sweet"><button data-v="0">ไม่</button><button data-v="1">ดื่ม</button></div></div>
+  </div>
+</section>
+
+<section class="card" id="c-water">
+  <h2>💧 ดื่มน้ำเปล่า <span class="ok">✔ แล้ว</span></h2>
+  <div class="hint">แตะแก้วตามจำนวนที่ดื่ม · เป้าหมายของคุณ <b id="wGoal">8</b> แก้ว</div>
+  <div class="glasses" id="glasses"></div>
+  <div style="font-size:17px">ดื่มแล้ว <b id="wCount">0</b> แก้ว</div>
+</section>
+
+<section class="card" id="c-move">
+  <h2>🚶 ออกแรง ออกกำลังกาย <span class="ok">✔ แล้ว</span></h2>
+  <div class="hint">ทำอะไรบ้าง และนานเท่าไร · เป้าหมาย <b id="mGoal">30</b> นาที</div>
+  <div class="grid" id="moveGrid"></div>
+  <div class="mins" id="mins"></div>
+</section>
+
+<section class="card" id="c-med">
+  <h2>💊 กินยาประจำ <span class="ok">✔ แล้ว</span></h2>
+  <div class="big" id="medBig">
+    <button data-v="ครบ">✅ กินครบทุกมื้อ</button>
+    <button data-v="ลืมบางมื้อ" class="bad">⏰ ลืมบางมื้อ</button>
+    <button data-v="ไม่ได้กิน" class="bad">❌ ไม่ได้กินเลย / หยุดเอง</button>
+  </div>
+</section>
+
+<section class="card warn only-ckd" id="c-risk">
+  <h2>⚠️ เรื่องที่ต้องระวังไต <span class="ok">✔ แล้ว</span></h2>
+  <div class="row"><span>วันนี้กินยาแก้ปวด หรือไปฉีดยาไหม</span><div class="yn" data-q="nsaid"><button data-v="0">ไม่</button><button data-v="1">ใช่</button></div></div>
+  <div class="sub-q" id="nsaidSub"><div class="hint" style="margin:0 0 6px">เป็นยาอะไร (แตะเลือก)</div><div class="grid" id="nsaidGrid"></div></div>
+  <div class="row"><span>กินสมุนไพร ยาหม้อ อาหารเสริมไหม</span><div class="yn" data-q="herb"><button data-v="0">ไม่</button><button data-v="1">ใช่</button></div></div>
+  <div class="row"><span>ความดันวันนี้ (ถ้าวัด)</span><span><input class="num" id="bp" placeholder="130/80" inputmode="numeric" style="width:120px" maxlength="7"></span></div>
+</section>
+
+<section class="card warn only-dm" id="c-hypo">
+  <h2>⚠️ ระวังน้ำตาลต่ำ <span class="ok">✔ แล้ว</span></h2>
+  <div class="row"><span>มีอาการใจสั่น เหงื่อออก หน้ามืด หิวมาก ไหม</span><div class="yn" data-q="hypo"><button data-v="0">ไม่มี</button><button data-v="1">มี</button></div></div>
+  <div class="row"><span>ค่าน้ำตาลปลายนิ้ว (ถ้าเจาะ)</span><span><input class="num" id="dtx" placeholder="mg/dL" inputmode="numeric" maxlength="3"></span></div>
+  <div class="row"><span>⚖️ น้ำหนักวันนี้<br><small style="color:#5b6b64">ชั่งตอนเช้า หลังเข้าห้องน้ำ</small></span><span><input class="num" id="wt" placeholder="กก." inputmode="decimal" maxlength="5"></span></div>
+</section>
+</div>
+
+<!-- ================= ผลของฉัน ================= -->
+<div class="app" id="vRes" style="display:none">
+  <div class="rhead"><h1>📈 ผลของฉัน</h1><div style="opacity:.9;font-size:16px" id="resSub"></div></div>
+  <div id="resBody"><div class="spin"></div></div>
+</div>
+
+<!-- ================= ความรู้ ================= -->
+<div class="app" id="vKb" style="display:none">
+  <div class="rhead"><h1>📚 ความรู้</h1><div style="opacity:.9;font-size:16px" id="kbSub"></div></div>
+  <section class="card"><h2>⭐ เรื่องของวันนี้</h2><div class="hint">อ่านวันละ 1 เรื่อง ใช้เวลาไม่ถึง 1 นาที</div><div id="kbToday"></div></section>
+  <section class="card"><h2>📖 เรื่องทั้งหมด <span style="margin-left:auto;font-size:15px;color:#0f7a5c" id="kbCount"></span></h2><div id="kbList"></div></section>
+</div>
+
+<div class="save" id="saveBar" style="display:none"><button id="saveBtn" onclick="save()">💾 บันทึกวันนี้</button></div>
+<nav id="nav" style="display:none"><div class="on" data-v="log"><span>📝</span>บันทึกวันนี้</div><div data-v="res"><span>📈</span>ผลของฉัน</div><div data-v="kb"><span>📚</span>ความรู้</div></nav>
+<div class="overlay" id="ov"><div class="sheet" id="sheet"></div></div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

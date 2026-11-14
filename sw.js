@@ -1,0 +1,12 @@
+/* Service worker: เก็บไฟล์แอปไว้ในเครื่อง ให้เปิดได้แม้สัญญาณอ่อน (ข้อมูลยังส่งผ่าน API) */
+const CACHE = 'kindee-v1';
+const FILES = ['./', 'index.html', 'style.css', 'app.js', 'config.js', 'icon-192.png', 'icon-512.png'];
+self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
+self.addEventListener('fetch', e => {
+  const u = new URL(e.request.url);
+  if (e.request.method !== 'GET' || u.origin !== location.origin) return; // API ไม่ผ่าน cache
+  e.respondWith(fetch(e.request).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put(e.request, c)); return r; })
+    .catch(() => caches.match(e.request, { ignoreSearch: true })));
+});
+/* ขั้นที่ 4: รับ push แจ้งเตือน (Firebase) — จะเพิ่มภายหลัง */
