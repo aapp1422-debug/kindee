@@ -161,3 +161,5 @@ body.dm .only-dm{display:block}
 #foodGrid .chip{font-size:15px;padding:8px 4px;min-height:70px;line-height:1.3}
 #foodGrid .chip .em{font-size:24px}
 #foodGrid .tag{font-size:11px;top:2px;right:3px}
+.bybar{background:#fff3cd;color:#7a5600;padding:10px 14px;font-size:16px;position:sticky;top:0;z-index:5;border-bottom:2px solid #f0d9a0}
+.bybar a{float:right;color:#0f7a5c;font-weight:700}

@@ -66,6 +66,14 @@ function setStaffPassword() {
   Logger.log('✅ ตั้งรหัสผ่านเจ้าหน้าที่แล้ว (ลบรหัสออกจากโค้ดได้เลย)');
 }
 
+/** ตั้งรหัสกลางสำหรับ อสม. (หน้า osm.html) — แก้รหัสแล้วกด Run 1 ครั้ง */
+function setOsmPassword() {
+  const pw = 'เปลี่ยนรหัสตรงนี้';
+  if (pw === 'เปลี่ยนรหัสตรงนี้' || pw.length < 4) throw new Error('กรุณาแก้รหัส อสม. ในโค้ดก่อน (อย่างน้อย 4 ตัว)');
+  PropertiesService.getScriptProperties().setProperty('OSM_PW_HASH', hash_('osm:' + pw));
+  Logger.log('✅ ตั้งรหัส อสม. แล้ว (ลบรหัสออกจากโค้ดได้เลย)');
+}
+
 /** (ไม่บังคับ) แจ้งเตือน red flag ด่วนเข้า Telegram */
 function setTelegram() {
   const BOT_TOKEN = 'ใส่ BOT TOKEN';
@@ -105,7 +113,7 @@ function doPost(e) {
 const ROUTES = {
   /* ---------- ฝั่งผู้ป่วย (ยืนยันตัวด้วย token ในลิงก์) ---------- */
   me:         r => { const p = patientByToken_(r.token); return { patient: publicPatient_(p), foods: foods_(), today: today_(), log: getLog_(p.patient_id, today_()), goal: currentGoal_(p.patient_id), streak: streak_(p.patient_id) }; },
-  saveLog:    r => saveLog_(patientByToken_(r.token), r.log, r.recorder || 'ผู้ป่วย'),
+  saveLog:    r => { const log = Object.assign({}, r.log); delete log.recorder; return saveLog_(patientByToken_(r.token), log, r.recorder ? String(r.recorder).slice(0, 60) : 'ผู้ป่วย'); },
   results:    r => results_(patientByToken_(r.token)),
   setGoal:    r => { const p = patientByToken_(r.token); setGoal_(p.patient_id, r.goal_text, 'ผู้ป่วย'); return {}; },
   savePush:   r => { const p = patientByToken_(r.token); upsert_('PushTokens', ['patient_id'], { patient_id: p.patient_id, fcm_token: r.fcm_token, device: r.device || '', updated_at: now_() }); return {}; },
@@ -120,7 +128,20 @@ const ROUTES = {
   saveNote:   r => { const by = staff_(r); requireText_(r.text, 'ข้อความบันทึก'); append_('Notes', { note_id: id_('N'), patient_id: r.patient_id, datetime: now_(), by, text: r.text }); return {}; },
   saveGoals:  r => { staff_(r); return saveGoals_(r.patient_id, r.water_goal, r.move_goal, r.ckd_stage, r.protein_goal); },
   followUp:   r => followUp_(r.alert_id, r.how, r.note, staff_(r)),
-  staffLog:   r => saveLog_(patientById_(r.patient_id), r.log, staff_(r)) // อสม./ญาติ คีย์แทน
+  staffLog:   r => saveLog_(patientById_(r.patient_id), r.log, staff_(r)), // เจ้าหน้าที่คีย์แทน
+  exportAll:  r => { staff_(r); return exportAll_(); },
+
+  /* ---------- อสม. (เห็นเฉพาะผู้ป่วยที่ตัวเองดูแล) ---------- */
+  osmNames:   r => ({ names: osmNames_() }),
+  osmLogin:   r => { if (!prop_('OSM_PW_HASH')) throw new Error('ยังไม่ได้ตั้งรหัส อสม. (เจ้าหน้าที่ต้องรัน setOsmPassword)');
+                     if (hash_('osm:' + (r.password || '')) !== prop_('OSM_PW_HASH')) throw new Error('รหัส อสม. ไม่ถูกต้อง');
+                     const n = String(r.name || '').trim(); if (osmNames_().indexOf(n) < 0) throw new Error('ไม่พบชื่อ อสม. นี้ในระบบ');
+                     const s = Utilities.getUuid(); CacheService.getScriptCache().put('O_' + s, n, 21600); return { session: s, name: n }; },
+  osmPatients: r => osmPatients_(osm_(r)),
+  osmSalt:    r => { const n = osm_(r); osmOwn_(n, r.patient_id); return saveLab_(r.patient_id, 'salt', r.value, r.date, 'อสม.' + n.replace(/^อสม\.?\s*/, '')); },
+  osmNote:    r => { const n = osm_(r); osmOwn_(n, r.patient_id); requireText_(r.text, 'ข้อความบันทึก'); append_('Notes', { note_id: id_('N'), patient_id: r.patient_id, datetime: now_(), by: 'อสม.' + n.replace(/^อสม\.?\s*/, ''), text: '[อสม. เยี่ยม] ' + r.text }); return {}; },
+  osmFollow:  r => { const n = osm_(r); const a = rows_('Alerts').find(x => x.alert_id === r.alert_id); if (!a) throw new Error('ไม่พบรายการ'); osmOwn_(n, a.patient_id);
+                     if (a.type !== 'norec') throw new Error('อสม. ปิดได้เฉพาะรายการ "ไม่บันทึก"'); return followUp_(r.alert_id, 'อสม. เยี่ยม', r.note, 'อสม.' + n.replace(/^อสม\.?\s*/, '')); }
 };
 
 /* ======================= ผู้ป่วย ======================= */
@@ -374,6 +395,27 @@ function stageOf_(p) {
   return e && Number(e.value) < 45 ? '3b' : '3a';
 }
 const stageFromEgfr_ = v => Number(v) < 45 ? '3b' : '3a';
+function osm_(r) { const n = CacheService.getScriptCache().get('O_' + (r.session || '')); if (!n) throw new Error('กรุณาเข้าสู่ระบบใหม่'); return n; }
+function osmNames_() { const s = {}; rows_('Patients').filter(p => p.status === 'active' && String(p.osm).trim()).forEach(p => s[String(p.osm).trim()] = 1); return Object.keys(s).sort(); }
+function osmOwn_(name, pid) { const p = patientById_(pid); if (String(p.osm).trim() !== name) throw new Error('ผู้ป่วยรายนี้ไม่อยู่ในความดูแลของคุณ'); return p; }
+function osmPatients_(name) {
+  const pts = rows_('Patients').filter(p => p.status === 'active' && String(p.osm).trim() === name);
+  const logs = rows_('DailyLog').filter(l => l.date >= daysAgo_(13)), labs = rows_('Labs'), alerts = rows_('Alerts');
+  return { name, today: today_(), patients: pts.map(p => {
+    const L = logs.filter(l => l.patient_id === p.patient_id);
+    const salt = labs.filter(l => l.patient_id === p.patient_id && l.type === 'salt').sort((a, b) => a.date < b.date ? -1 : 1).pop();
+    return { patient_id: p.patient_id, name: p.name, moo: p.moo, group: p.group, ckd_stage: stageOf_(p), token: p.token, phone: p.phone,
+      recToday: L.some(l => l.date === today_()), rec7: L.filter(l => l.date >= daysAgo_(6)).length, noRecDays: noRecDays_(p, L),
+      lastSalt: salt ? { value: Number(salt.value), date: salt.date } : null,
+      alerts: alerts.filter(a => a.patient_id === p.patient_id && a.status === 'open').map(a => ({ alert_id: a.alert_id, type: a.type, message: a.message, level: Number(a.level) })) };
+  }) };
+}
+/** ข้อมูลทั้งหมดสำหรับส่งออก Excel (ไม่ส่ง token) */
+function exportAll_() {
+  return { exported_at: now_(),
+    patients: rows_('Patients').map(p => { const o = Object.assign({}, p); delete o.token; o.ckd_stage = stageOf_(p); return o; }),
+    logs: rows_('DailyLog'), labs: rows_('Labs'), alerts: rows_('Alerts'), notes: rows_('Notes'), goals: rows_('WeeklyGoals'), foods: rows_('FoodList') };
+}
 function staff_(r) { const n = CacheService.getScriptCache().get('S_' + (r.session || '')); if (!n) throw new Error('กรุณาเข้าสู่ระบบใหม่'); return n; }
 
 /* ======================= ช่วยเหลือ: ทั่วไป ======================= */

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f7a5c">
+<meta name="robots" content="noindex">
+<title>อสม. – ระบบติดตามพฤติกรรม รพ.สต.บ้านนาเพียงใหม่</title>
+<link rel="icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f3f6f4;color:#1f2d27;font-size:18px;line-height:1.5}
+.wrap{max-width:520px;margin:0 auto;padding-bottom:40px}
+header{background:#0f7a5c;color:#fff;padding:16px}
+header h1{font-size:22px}
+header .sub{font-size:15px;opacity:.9}
+header .out{float:right;background:transparent;border:1px solid #fff;color:#fff;border-radius:10px;padding:4px 10px;font:inherit;font-size:14px}
+.card{background:#fff;margin:12px;border-radius:16px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+label{display:block;font-size:15px;color:#5b6b64;margin:10px 0 4px}
+input,select,textarea{width:100%;font:inherit;font-size:18px;padding:10px 12px;border:2px solid #cfe3da;border-radius:12px;background:#fff}
+.btn{display:inline-block;border:2px solid #0f7a5c;background:#fff;color:#0f7a5c;font:inherit;font-size:16px;font-weight:600;padding:9px 12px;border-radius:12px;text-decoration:none;text-align:center;cursor:pointer}
+.btn.pri{background:#0f7a5c;color:#fff}
+.btn.big{width:100%;padding:14px;font-size:20px;margin-top:14px}
+.err{color:#c0392b;font-size:15px;margin-top:6px}
+.sum{display:flex;gap:8px;margin:12px}
+.sum div{flex:1;background:#fff;border-radius:14px;padding:10px;text-align:center;font-size:14px;color:#5b6b64}
+.sum b{display:block;font-size:26px;color:#1f2d27}
+.sum .red b{color:#c0392b}.sum .grn b{color:#0f7a5c}
+.tabs{display:flex;gap:6px;margin:0 12px}
+.tabs button{flex:1;padding:10px 0;border:2px solid #cfe3da;background:#fff;border-radius:12px;font:inherit;font-size:16px}
+.tabs button.on{border-color:#0f7a5c;background:#e3f4ec;font-weight:700}
+.pt h3{font-size:20px;margin-bottom:2px}
+.pill{display:inline-block;font-size:13px;padding:1px 8px;border-radius:10px;font-weight:600;margin-right:4px}
+.p-ckd{background:#e6f0fa;color:#1d5a91}.p-dm{background:#f6ebfa;color:#7a2f8f}
+.st{margin:8px 0;padding:8px 10px;border-radius:10px;font-size:16px}
+.st.ok{background:#e3f4ec;color:#0a5a43}.st.wait{background:#f1f3f2;color:#5b6b64}.st.bad{background:#fde3e1;color:#a3261b}
+.meta{font-size:14px;color:#5b6b64}
+.bar{height:8px;background:#eef1f0;border-radius:4px;overflow:hidden;margin:4px 0 2px}
+.bar i{display:block;height:100%}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.acts .full{grid-column:1/-1}
+.box{margin-top:10px;background:#f5faf7;border-radius:12px;padding:10px;display:none}
+.box.show{display:block}
+.box .row{display:flex;gap:8px;margin-top:6px}
+.salt{font-size:15px;margin-top:6px;padding:6px 10px;border-radius:10px}
+.s0{background:#e3f4ec;color:#0a5a43}.s1{background:#fdeccc;color:#8a5200}.s2{background:#fde3e1;color:#a3261b}
+.alert{background:#fff7f6;border:1px solid #f3cfc9;border-radius:10px;padding:8px 10px;margin-top:8px;font-size:15px}
+.empty{text-align:center;color:#8a9893;padding:20px}
+.spin{width:36px;height:36px;border:4px solid #cfe3da;border-top-color:#0f7a5c;border-radius:50%;animation:sp 1s linear infinite;margin:30px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1f2d27;color:#fff;padding:10px 18px;border-radius:12px;font-size:16px;display:none;z-index:9;max-width:90%}
+.toast.show{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><button class="out" id="outBtn" style="display:none" onclick="logout()">ออก</button><h1>👥 หน้าสำหรับ อสม.</h1><div class="sub" id="hSub">ระบบติดตามพฤติกรรม รพ.สต.บ้านนาเพียงใหม่</div></header>
+
+<div class="card" id="loginBox" style="display:none">
+  <h2 style="font-size:20px">🔐 เข้าสู่ระบบ</h2>
+  <label>ชื่อ อสม.</label><select id="lName"><option value="">— กำลังโหลด —</option></select>
+  <label>รหัส อสม. (ขอจากเจ้าหน้าที่ รพ.สต.)</label><input id="lPw" type="password" inputmode="numeric" onkeydown="if(event.key==='Enter')doLogin()">
+  <div class="err" id="lErr"></div>
+  <button class="btn pri big" id="lBtn" onclick="doLogin()">เข้าสู่ระบบ</button>
+</div>
+
+<div id="main" style="display:none">
+  <div class="sum" id="sum"></div>
+  <div class="tabs"><button class="on" data-f="need" onclick="setF('need')">⚠️ ต้องติดตาม</button><button data-f="all" onclick="setF('all')">👥 ทั้งหมด</button><button onclick="load()" style="flex:0 0 52px">🔄</button></div>
+  <div id="list"><div class="spin"></div></div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="config.js"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const GN={ckd:'🫘 ชะลอไต',dm:'🏃 ลดหวานลดพุง'};
+const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const thD=s=>{const d=new Date(String(s).slice(0,10)+'T12:00:00');return isNaN(d)?esc(s):d.toLocaleDateString('th-TH',{day:'numeric',month:'short'})};
+let SES=ls.get('osm_session'),NAME=ls.get('osm_name')||'',DATA=null,F='need';
+
+async function api(action,data){
+  let j;
+  try{const r=await fetch(window.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action,session:SES},data||{}))});j=await r.json()}
+  catch(e){throw new Error('เชื่อมต่อไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่')}
+  if(!j.ok){if(/เข้าสู่ระบบใหม่/.test(j.error||''))logout(true);throw new Error(j.error||'เกิดข้อผิดพลาด')}
+  return j;
+}
+async function showLogin(msg){
+  $('main').style.display='none';$('outBtn').style.display='none';$('loginBox').style.display='block';$('lErr').textContent=msg||'';
+  try{const r=await api('osmNames');$('lName').innerHTML='<option value="">— เลือกชื่อ —</option>'+r.names.map(n=>'<option'+(n===NAME?' selected':'')+'>'+esc(n)+'</option>').join('');
+    if(!r.names.length)$('lErr').textContent='ยังไม่มีชื่อ อสม. ในระบบ (เจ้าหน้าที่ต้องกรอก "อสม. ผู้ดูแล" ตอนลงทะเบียนผู้ป่วย)'}
+  catch(e){$('lErr').textContent=e.message}
+}
+async function doLogin(){
+  const n=$('lName').value,pw=$('lPw').value;
+  if(!n){$('lErr').textContent='กรุณาเลือกชื่อ';return}if(!pw){$('lErr').textContent='กรุณากรอกรหัส';return}
+  $('lBtn').disabled=true;
+  try{const r=await api('osmLogin',{name:n,password:pw});SES=r.session;NAME=r.name;ls.set('osm_session',SES);ls.set('osm_name',NAME);$('lPw').value='';start()}
+  catch(e){$('lErr').textContent=e.message}
+  $('lBtn').disabled=false;
+}
+function logout(expired){SES=null;ls.del('osm_session');showLogin(expired?'หมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่':'')}
+function start(){$('loginBox').style.display='none';$('main').style.display='block';$('outBtn').style.display='inline-block';$('hSub').textContent='👤 '+NAME;load()}
+async function load(){
+  $('list').innerHTML='<div class="spin"></div>';
+  try{DATA=await api('osmPatients');render()}catch(e){$('list').innerHTML='<div class="card err">'+esc(e.message)+'</div>'}
+}
+const need=p=>!p.recToday||p.alerts.length>0;
+function setF(f){F=f;document.querySelectorAll('.tabs button[data-f]').forEach(b=>b.classList.toggle('on',b.dataset.f===f));render()}
+const byName=()=>(/^อสม/.test(NAME)?NAME:'อสม.'+NAME);
+function render(){
+  const P=DATA.patients,rec=P.filter(p=>p.recToday).length,nd=P.filter(need).length;
+  $('sum').innerHTML='<div>ดูแล<b>'+P.length+'</b>ราย</div><div class="grn">บันทึกวันนี้<b>'+rec+'</b>ราย</div><div class="red">ต้องติดตาม<b>'+nd+'</b>ราย</div>';
+  const L=(F==='need'?P.filter(need):P).slice().sort((a,b)=>b.noRecDays-a.noRecDays||b.alerts.length-a.alerts.length);
+  if(!L.length){$('list').innerHTML='<div class="card empty">'+(F==='need'?'🎉 ทุกคนบันทึกวันนี้แล้ว ไม่มีรายการต้องติดตาม':'ยังไม่มีผู้ป่วยในความดูแล')+'</div>';return}
+  $('list').innerHTML=L.map(p=>{
+    const st=p.recToday?'<div class="st ok">✅ บันทึกวันนี้แล้ว</div>':(p.noRecDays>=3?'<div class="st bad">🔴 ไม่ได้บันทึก '+p.noRecDays+' วันแล้ว — ควรไปเยี่ยม/โทรถาม</div>':'<div class="st wait">⏳ วันนี้ยังไม่บันทึก'+(p.noRecDays>1?' (ขาด '+p.noRecDays+' วัน)':'')+'</div>');
+    const salt=p.lastSalt?'<div class="salt s'+(p.lastSalt.value<=0.7?0:p.lastSalt.value<=0.9?1:2)+'">🧂 ค่าความเค็มล่าสุด '+p.lastSalt.value.toFixed(2)+'% ('+thD(p.lastSalt.date)+')</div>':(p.group==='ckd'?'<div class="salt s1">🧂 ยังไม่เคยวัดความเค็ม</div>':'');
+    const al=p.alerts.map(a=>'<div class="alert">'+(a.level>=3?'🔴':'🟠')+' '+esc(a.message)+(a.type==='norec'?'<div class="row" style="margin-top:6px"><input id="fn-'+a.alert_id+'" placeholder="ไปเยี่ยมแล้ว ผลเป็นอย่างไร" maxlength="200"><button class="btn pri" onclick="follow(\''+a.alert_id+'\')">ปิด</button></div>':'<div class="meta">เจ้าหน้าที่จะติดตามรายการนี้</div>')+'</div>').join('');
+    const id=esc(p.patient_id);
+    return '<div class="card pt"><h3>'+esc(p.name)+'</h3><span class="pill p-'+p.group+'">'+GN[p.group]+(p.ckd_stage?' '+p.ckd_stage:'')+'</span><span class="meta">หมู่ '+esc(p.moo)+(p.phone?' · ☎ <a href="tel:'+esc(p.phone)+'">'+esc(p.phone)+'</a>':'')+'</span>'+
+      st+'<div class="meta">บันทึก 7 วันล่าสุด: '+p.rec7+'/7 วัน</div><div class="bar"><i style="width:'+(p.rec7/7*100)+'%;background:'+(p.rec7>=5?'#2e9e6b':p.rec7>=3?'#e8a317':'#d0442c')+'"></i></div>'+salt+al+
+      '<div class="acts"><a class="btn pri full" href="index.html?t='+encodeURIComponent(p.token)+'&by='+encodeURIComponent(byName())+'">📝 บันทึกแทนผู้ป่วย</a>'+
+      (p.group==='ckd'?'<button class="btn" onclick="tog(\'sb-'+id+'\')">🧂 ค่าความเค็ม</button>':'')+'<button class="btn'+(p.group==='ckd'?'':' full')+'" onclick="tog(\'nb-'+id+'\')">🏠 บันทึกเยี่ยม</button></div>'+
+      (p.group==='ckd'?'<div class="box" id="sb-'+id+'"><b>🧂 ค่าจากเครื่อง CHEM METER (%)</b><div class="meta">😊 ไม่เกิน 0.70 · 😐 0.71–0.90 · 😢 เกิน 0.90</div><div class="row"><input id="sv-'+id+'" inputmode="decimal" placeholder="เช่น 0.82"><input id="sd-'+id+'" type="date" value="'+ymd(new Date())+'"></div><button class="btn pri big" style="margin-top:8px;padding:10px;font-size:18px" onclick="saveSalt(\''+id+'\')">บันทึกค่าความเค็ม</button><div class="err" id="se-'+id+'"></div></div>':'')+
+      '<div class="box" id="nb-'+id+'"><b>🏠 บันทึกการเยี่ยม</b><textarea id="nv-'+id+'" rows="3" maxlength="300" placeholder="เช่น ไปเยี่ยมบ้าน ผู้ป่วยลืมบันทึกเพราะ... แนะนำ..."></textarea><button class="btn pri big" style="margin-top:8px;padding:10px;font-size:18px" onclick="saveNote(\''+id+'\')">บันทึก</button><div class="err" id="ne-'+id+'"></div></div></div>';
+  }).join('');
+}
+function tog(id){$(id).classList.toggle('show')}
+async function saveSalt(id){
+  const v=parseFloat($('sv-'+id).value),d=$('sd-'+id).value;
+  if(isNaN(v)||v<0||v>3){$('se-'+id).textContent='กรุณากรอกตัวเลข 0–3 เช่น 0.82';return}
+  if(!d||d>ymd(new Date())){$('se-'+id).textContent='วันที่ไม่ถูกต้อง';return}
+  try{const r=await api('osmSalt',{patient_id:id,value:v,date:d});toast(v>0.9?'บันทึกแล้ว — เค็มมาก เจ้าหน้าที่จะได้รับแจ้ง':'บันทึกค่าความเค็มแล้ว');load()}catch(e){$('se-'+id).textContent=e.message}
+}
+async function saveNote(id){
+  const t=$('nv-'+id).value.trim();if(!t){$('ne-'+id).textContent='กรุณาพิมพ์บันทึก';return}
+  try{await api('osmNote',{patient_id:id,text:t});toast('บันทึกการเยี่ยมแล้ว');load()}catch(e){$('ne-'+id).textContent=e.message}
+}
+async function follow(aid){
+  const el=$('fn-'+aid),t=el.value.trim();if(!t){el.focus();el.placeholder='กรุณาพิมพ์ผลการเยี่ยมก่อน';el.style.borderColor='#d0442c';return}
+  try{await api('osmFollow',{alert_id:aid,note:t});toast('ปิดรายการแล้ว');load()}catch(e){toast(e.message)}
+}
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3000)}
+if(SES)start();else showLogin();
+</script>
+</body>
+</html>

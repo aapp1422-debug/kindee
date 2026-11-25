@@ -34,8 +34,11 @@ async function api(action, data) {
 }
 
 /* ---------- token จากลิงก์ส่วนตัว ---------- */
-let TOKEN = new URLSearchParams(location.search).get('t');
-if (TOKEN) store.set('token', TOKEN); else TOKEN = store.get('token');
+const QS = new URLSearchParams(location.search);
+let TOKEN = QS.get('t');
+/** โหมดบันทึกแทน (อสม./ญาติเปิดจากหน้า osm.html) — ไม่จำผู้ป่วยรายนี้ไว้ในเครื่อง */
+const BY = (QS.get('by') || '').slice(0, 60);
+if (TOKEN && !BY) store.set('token', TOKEN); else if (!TOKEN) TOKEN = store.get('token');
 
 /* ---------- สถานะฟอร์ม ---------- */
 let ME = null, FOODS = [], GROUP = 'ckd';
@@ -46,14 +49,14 @@ const S = { meal: 0, meals: [new Set(), new Set(), new Set()], other: ['', '', '
 /* ---------- เริ่มต้น ---------- */
 async function boot() {
   if (!TOKEN) return bootMsg('🔗', 'กรุณาเปิดจากลิงก์หรือ QR ที่ได้รับจาก รพ.สต.<br><small>ถ้าหาไม่เจอ ติดต่อเจ้าหน้าที่ได้เลยค่ะ</small>');
-  setManifest();
+  if (!BY) setManifest();
   try {
     await flushPending();
     ME = await api('me', { token: TOKEN });
-    store.set('me', ME);
+    store.set('me_' + TOKEN, ME);
   } catch (e) {
     if (e.server) return bootMsg('⚠️', esc(e.message) + '<br><small style="color:#8a9893">รหัสลิงก์: …' + esc(String(TOKEN).slice(-4)) + '</small>');
-    ME = store.get('me');
+    ME = store.get('me_' + TOKEN) || (BY ? null : store.get('me'));
     if (!ME) return bootMsg('📶', 'เชื่อมต่ออินเทอร์เน็ตไม่ได้<br><small>ลองใหม่อีกครั้งเมื่อมีสัญญาณ</small><br><br><button class="btn-retry" onclick="location.reload()" style="padding:12px 24px;font:inherit;border-radius:12px;border:2px solid #0f7a5c;background:#fff;color:#0f7a5c">ลองใหม่</button>');
     $('offlineBar').classList.add('show');
   }
@@ -61,6 +64,7 @@ async function boot() {
   GROUP = ME.patient.group;
   STAGE = GROUP === 'ckd' ? (ME.patient.ckd_stage || '3a') : '';
   document.body.className = GROUP + (STAGE ? ' s' + STAGE : '');
+  if (BY) { const bar = document.createElement('div'); bar.className = 'bybar'; bar.innerHTML = '📝 <b>' + esc(BY) + '</b> กำลังบันทึกแทนผู้ป่วย <a href="osm.html">← กลับรายชื่อ</a>'; document.body.insertBefore(bar, document.body.firstChild); }
   $('hello').textContent = 'สวัสดีค่ะ คุณ' + ME.patient.name.replace(/^(นาย|นางสาว|นาง)\s*/, '') + ' 👋';
   $('today').textContent = new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   $('grpBadge').textContent = GNAME[GROUP] + (STAGE ? ' ' + STAGE : '');
@@ -264,7 +268,7 @@ async function send() {
   const log = buildLog(); log.date = todayStr();
   $('saveBtn').disabled = true; $('saveBtn').textContent = '⏳ กำลังบันทึก...';
   let res = null, offline = false;
-  try { res = await api('saveLog', { token: TOKEN, log }); setStreak(res.streak); }
+  try { res = await api('saveLog', withBy({ token: TOKEN, log })); setStreak(res.streak); }
   catch (e) {
     if (e.server) { $('saveBtn').disabled = false; $('saveBtn').textContent = '💾 บันทึกวันนี้'; return sheet('<h3>⚠️ บันทึกไม่สำเร็จ</h3><div class="alert">' + esc(e.message) + '</div><button onclick="closeOv()">ปิด</button>'); }
     offline = true; queue(log);
@@ -318,12 +322,15 @@ function sheet(h) { $('sheet').innerHTML = h; $('ov').classList.add('show'); }
 function closeOv() { $('ov').classList.remove('show'); }
 
 /* ---------- เก็บในเครื่องเมื่อออฟไลน์ ---------- */
-function queue(log) { const q = (store.get('pending') || []).filter(x => x.date !== log.date); q.push(log); store.set('pending', q); }
-function pendingToday() { return (store.get('pending') || []).find(x => x.date === todayStr()) || null; }
+const withBy = o => (BY ? Object.assign(o, { recorder: BY }) : o);
+/* คิวออฟไลน์เก็บ token + ผู้บันทึก ไปกับแต่ละรายการ (อสม. บันทึกหลายคนในเครื่องเดียวได้) */
+function queue(log) { const q = (store.get('pending') || []).filter(x => !(x.date === log.date && (x._t || TOKEN) === TOKEN)); q.push(Object.assign({}, log, { _t: TOKEN, _by: BY })); store.set('pending', q); }
+function pendingToday() { const x = (store.get('pending') || []).find(x => x.date === todayStr() && (x._t || TOKEN) === TOKEN); return x || null; }
 async function flushPending() {
   const q = store.get('pending') || []; if (!q.length) return;
   const left = [];
-  for (const log of q) { try { await api('saveLog', { token: TOKEN, log }); } catch (e) { if (!e.server) left.push(log); } }
+  for (const item of q) { const log = Object.assign({}, item), t = log._t || TOKEN, by = log._by; delete log._t; delete log._by;
+    try { await api('saveLog', Object.assign({ token: t, log }, by ? { recorder: by } : {})); } catch (e) { if (!e.server) left.push(item); } }
   store.set('pending', left);
 }
 function todayStr() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -372,8 +379,8 @@ function weekDates(offsetWeeks) { const d = new Date(); d.setHours(12); const wd
 let RES = null, gSel = null;
 async function loadResults() {
   $('resSub').textContent = GNAME[GROUP] + (STAGE ? ' ' + STAGE : '');
-  try { RES = await api('results', { token: TOKEN }); store.set('res', RES); }
-  catch (e) { RES = store.get('res'); if (!RES) { $('resBody').innerHTML = '<div class="card empty">โหลดผลไม่ได้ ลองใหม่เมื่อมีอินเทอร์เน็ต</div>'; return; } }
+  try { RES = await api('results', { token: TOKEN }); store.set('res_' + TOKEN, RES); }
+  catch (e) { RES = store.get('res_' + TOKEN); if (!RES) { $('resBody').innerHTML = '<div class="card empty">โหลดผลไม่ได้ ลองใหม่เมื่อมีอินเทอร์เน็ต</div>'; return; } }
   renderRes();
 }
 function renderRes() {

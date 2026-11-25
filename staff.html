@@ -127,6 +127,20 @@ tr.click{cursor:pointer}tr.click:hover{background:#f5faf7}
     <select id="mooSel"><option value="all">ทุกหมู่บ้าน</option></select>
     <button class="btn" onclick="loadOv()">🔄 รีเฟรช</button>
     <span class="muted" id="ovTime"></span>
+    <button class="btn" style="margin-left:auto" onclick="$('expBox').style.display=$('expBox').style.display==='none'?'block':'none'">📥 ส่งออก Excel</button>
+  </div>
+  <div class="panel" id="expBox" style="display:none">
+    <h2>📥 ส่งออกข้อมูลเป็น Excel</h2>
+    <div class="form" style="max-width:none">
+      <div class="row2" style="grid-template-columns:1fr 1fr 1fr">
+        <div><label>ตั้งแต่วันที่ (ว่าง = ตั้งแต่เริ่มโครงการ)</label><input type="date" id="exFrom"></div>
+        <div><label>ถึงวันที่</label><input type="date" id="exTo"></div>
+        <div><label>กลุ่ม</label><select id="exGrp"><option value="all">ทั้งหมด</option><option value="ckd">🫘 ชะลอไต (3a+3b)</option><option value="ckd3a">🫘 ชะลอไต 3a</option><option value="ckd3b">🫘 ชะลอไต 3b</option><option value="dm">🏃 ลดหวานลดพุง</option></select></div>
+      </div>
+      <div><label style="color:#1f2d27;font-size:15px"><input type="checkbox" id="exAnon" checked style="width:auto"> ซ่อนชื่อและเบอร์โทร ใช้รหัสผู้ป่วยแทน (แนะนำสำหรับงานวิจัย / PDPA)</label></div>
+      <div class="muted">ได้ไฟล์ .xlsx 7 ชีต: สรุปรายคน · บันทึกรายวัน · อาหารรายมื้อ (ลดหวาน) · ผลตรวจ · แจ้งเตือน · บันทึกติดตาม · คำอธิบายตัวแปร</div>
+      <div><button class="btn pri big" id="exBtn" onclick="doExport()">📥 ดาวน์โหลดไฟล์ Excel</button> <span class="err" id="exErr"></span></div>
+    </div>
   </div>
   <div id="ovBody"><div class="spin"></div></div>
 </section>
@@ -482,6 +496,89 @@ async function register(){
     qrBlock(p,'qrOut');['rName','rAge','rLab','rWt','rOsm','rPhone'].forEach(x=>g(x).value='');g('rConsent').checked=false;toast('ลงทะเบียน '+d.name+' แล้ว');loadOv()}
   catch(e){err.textContent=e.message}
   $('rBtn').disabled=false;
+}
+
+/* ---------- ส่งออก Excel ---------- */
+$('exTo').value=ymd(new Date());
+function loadXlsx(){return new Promise((ok,no)=>{if(window.XLSX)return ok();const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';sc.onload=ok;sc.onerror=()=>no(new Error('โหลดตัวสร้างไฟล์ Excel ไม่ได้ ตรวจสอบอินเทอร์เน็ต'));document.head.appendChild(sc)})}
+const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length*10)/10:'';
+const pct=(n,d)=>d?Math.round(n/d*1000)/10:'';
+const dayDiff=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5)+1;
+function buildExport(X,o){
+  const inG=p=>o.grp==='all'||p.group===o.grp||(o.grp.indexOf('ckd3')===0&&p.group==='ckd'&&'ckd'+p.ckd_stage===o.grp);
+  const pts=X.patients.filter(inG),ids=new Set(pts.map(p=>p.patient_id)),inR=d=>{d=String(d).slice(0,10);return d>=o.from&&d<=o.to};
+  const logs=X.logs.filter(l=>ids.has(l.patient_id)&&inR(l.date)).sort((a,b)=>a.patient_id<b.patient_id?-1:a.patient_id>b.patient_id?1:(a.date<b.date?-1:1));
+  const labs=X.labs.filter(l=>ids.has(l.patient_id)).sort((a,b)=>a.date<b.date?-1:1);
+  const food={};(X.foods||[]).forEach(f=>food[f.code]=f.name);
+  const nm=p=>o.anon?{}:{'ชื่อ-สกุล':p.name,'เบอร์โทร':p.phone};
+  const grpTh=p=>p.group==='ckd'?'ชะลอไต':'ลดหวานลดพุง';
+  const TL={HbA1c:'HbA1c (%)',eGFR:'eGFR',salt:'ความเค็ม CHEM METER (%)',weight:'น้ำหนัก (กก.)'};
+  // 1 สรุปรายคน
+  const sum=pts.map(p=>{
+    const L=logs.filter(l=>l.patient_id===p.patient_id),start=String(p.start_date)>o.from?String(p.start_date):o.from,end=o.to<ymd(new Date())?o.to:ymd(new Date());
+    const nDays=start<=end?dayDiff(start,end):0,lb=t=>labs.filter(l=>l.patient_id===p.patient_id&&l.type===t);
+    const r={'รหัส':p.patient_id};Object.assign(r,nm(p));
+    Object.assign(r,{'อายุ':num(p.age),'หมู่':p.moo,'กลุ่ม':grpTh(p),'ระยะ CKD':p.ckd_stage||'','อสม. ผู้ดูแล':p.osm||'','ผู้บันทึกหลัก':p.recorder,'วันเริ่มโครงการ':p.start_date,'สถานะ':p.status,
+      'จำนวนวันในช่วง':nDays,'วันที่บันทึก':L.length,'% การบันทึก':pct(L.length,nDays),
+      'เป้าน้ำ (แก้ว)':num(p.water_goal),'น้ำเฉลี่ย (แก้ว/วัน)':avg(L.map(l=>num(l.water))),'% วันดื่มน้ำครบเป้า':pct(L.filter(l=>num(l.water)>=num(p.water_goal||8)).length,L.length),
+      'ออกแรงเฉลี่ย (นาที/วัน)':avg(L.map(l=>num(l.move_min))),'% วันกินยาครบ':pct(L.filter(l=>l.med==='ครบ').length,L.length)});
+    if(p.group==='ckd'){Object.assign(r,{'% วันซดน้ำแกง ≥ครึ่งถ้วย':pct(L.filter(l=>num(l.soup_lv)>=2).length,L.length),'% วันจ้ำเกือบทุกคำ':pct(L.filter(l=>num(l.dip_lv)>=2).length,L.length),'% วันเติมผงปรุง':pct(L.filter(l=>num(l.season)===1).length,L.length),
+      'จำนวนวันใช้ยาแก้ปวด/ฉีดยา':L.filter(l=>num(l.nsaid)===1).length,'จำนวนวันกินสมุนไพร/อาหารเสริม':L.filter(l=>num(l.herb)===1).length,
+      'เป้าโปรตีน (ช้อน/วัน)':p.ckd_stage==='3b'?num(p.protein_goal||8):'','โปรตีนเฉลี่ย (ช้อน/วัน)':p.ckd_stage==='3b'?avg(L.filter(l=>l.protein!==''&&l.protein!=null).map(l=>num(l.protein))):'',
+      'ความดันตัวบนเฉลี่ย':avg(L.filter(l=>/^\d+\//.test(String(l.bp))).map(l=>+String(l.bp).split('/')[0])),'ความดันตัวล่างเฉลี่ย':avg(L.filter(l=>/^\d+\//.test(String(l.bp))).map(l=>+String(l.bp).split('/')[1]))})}
+    else{const D=L.filter(l=>l.dm_meals_json);Object.assign(r,{'ข้าวสวยเฉลี่ย (ทัพพี/วัน)':avg(D.map(l=>num(l.rice_white))),'ข้าวเหนียวเฉลี่ย (ปั้น/วัน)':avg(L.map(l=>num(l.rice))),'เส้นเฉลี่ย (/วัน)':avg(D.map(l=>num(l.noodle_n))),
+      'ผักเฉลี่ย (ทัพพี+ฝ่ามือ/วัน)':avg(L.map(l=>num(l.veg)+num(l.veg_palm))),'ผลไม้เฉลี่ย (/วัน)':avg(D.map(l=>num(l.fruit_n))),'นมเฉลี่ย (/วัน)':avg(D.map(l=>num(l.milk_n))),'ขนมเฉลี่ย (/วัน)':avg(D.map(l=>num(l.snack_n))),
+      '% วันดื่มเครื่องดื่มหวาน':pct(L.filter(l=>num(l.sweet)===1).length,L.length),'จำนวนวันดื่มชูกำลัง':D.filter(l=>num(l.energy_n)>0).length,
+      'DTX เฉลี่ย':avg(L.filter(l=>num(l.dtx)>0).map(l=>num(l.dtx))),'จำนวนครั้ง DTX<70 / น้ำตาลต่ำ':L.filter(l=>num(l.hypo)===1||(num(l.dtx)>0&&num(l.dtx)<70)).length})}
+    const main=p.group==='ckd'?'eGFR':'HbA1c',ml=lb(main);
+    r[main+' ก่อนเริ่ม']=ml.length?num(ml[0].value):'';r['วันที่ตรวจ (ก่อนเริ่ม)']=ml.length?ml[0].date:'';
+    r[main+' ล่าสุด']=ml.length>1?num(ml[ml.length-1].value):'';r['วันที่ตรวจ (ล่าสุด)']=ml.length>1?ml[ml.length-1].date:'';
+    r[main+' เปลี่ยนแปลง']=ml.length>1?Math.round((num(ml[ml.length-1].value)-num(ml[0].value))*100)/100:'';
+    const w=lb('weight').map(l=>({d:l.date,v:num(l.value)})).concat(X.logs.filter(l=>l.patient_id===p.patient_id&&num(l.weight)>0).map(l=>({d:l.date,v:num(l.weight)}))).sort((a,b)=>a.d<b.d?-1:1);
+    r['น้ำหนักเริ่ม (กก.)']=w.length?w[0].v:'';r['น้ำหนักล่าสุด (กก.)']=w.length>1?w[w.length-1].v:'';r['น้ำหนักเปลี่ยน (กก.)']=w.length>1?Math.round((w[w.length-1].v-w[0].v)*10)/10:'';
+    if(p.group==='ckd'){const sl=lb('salt');r['ความเค็มครั้งแรก (%)']=sl.length?num(sl[0].value):'';r['ความเค็มล่าสุด (%)']=sl.length>1?num(sl[sl.length-1].value):''}
+    r['จำนวนแจ้งเตือน (ในช่วง)']=X.alerts.filter(a=>a.patient_id===p.patient_id&&inR(a.date)).length;r['จำนวนบันทึกติดตาม (ในช่วง)']=X.notes.filter(n=>n.patient_id===p.patient_id&&inR(n.datetime)).length;
+    return r});
+  // 2 บันทึกรายวัน
+  const pmap={};pts.forEach(p=>pmap[p.patient_id]=p);
+  const daily=logs.map(l=>{const p=pmap[l.patient_id],meals=pj(l.meals_json);const r={'รหัส':l.patient_id};Object.assign(r,nm(p));
+    Object.assign(r,{'กลุ่ม':grpTh(p),'ระยะ':p.ckd_stage||'','วันที่':l.date,'ผู้บันทึก':l.recorder,'น้ำ (แก้ว)':num(l.water),'ออกแรง (นาที)':num(l.move_min),'ประเภทออกแรง':l.move_types,'ยา':l.med,
+      'เมนูที่กิน':p.group==='ckd'?meals.map(m=>m.meal+': '+(m.items||[]).map(c=>food[c]||c).join(', ')+(m.other?(m.items&&m.items.length?', ':'')+m.other:'')).join(' | '):meals.filter(m=>m.other).map(m=>m.meal+': '+m.other).join(' | ')});
+    if(p.group==='ckd')Object.assign(r,{'ผัก (กำมือ)':num(l.veg),'ซดน้ำแกง (0-3)':l.soup_lv,'จ้ำน้ำพริก (0-2)':l.dip_lv,'เติมผงปรุง (0/1)':l.season,'โปรตีน (ช้อน)':l.protein,'ยาแก้ปวด/ฉีดยา (0/1)':l.nsaid,'ชนิดยาแก้ปวด':l.nsaid_types,'สมุนไพร/อาหารเสริม (0/1)':l.herb,'ความดัน':l.bp});
+    else Object.assign(r,{'ข้าวสวย (ทัพพี)':num(l.rice_white),'ข้าวเหนียว (ปั้น)':num(l.rice),'เส้น':num(l.noodle_n),'ผัก (ทัพพี)':num(l.veg),'ผัก (ฝ่ามือ)':num(l.veg_palm),'ผลไม้':num(l.fruit_n),'นม':num(l.milk_n),'ขนม':num(l.snack_n),'กาแฟ/ชา':num(l.coffee_n),'น้ำอัดลม/น้ำหวาน':num(l.soda_n),'ชูกำลัง':num(l.energy_n),'อาหารเสริม':num(l.supp_n),'ดื่มหวาน (0/1)':l.sweet,'น้ำตาลต่ำ (0/1)':l.hypo,'DTX':l.dtx,'น้ำหนัก':l.weight});
+    return r});
+  // 3 อาหารรายมื้อ
+  const meals=[];logs.forEach(l=>pj(l.dm_meals_json).forEach(m=>{const r={'รหัส':l.patient_id};Object.assign(r,nm(pmap[l.patient_id]));
+    const it=c=>Object.keys((m.items||{})[c]||{}).map(o=>(OPTN[o]?OPTN[o][0]:o)+' '+m.items[c][o]+' '+(OPTN[o]?OPTN[o][1]:'')).join(', ');
+    const cnt=c=>Object.values((m.items||{})[c]||{}).reduce((a,b)=>a+num(b),0);
+    Object.assign(r,{'วันที่':l.date,'มื้อ':m.meal,'ข้าวสวย (ทัพพี)':num(m.rice_white),'ข้าวเหนียว (ปั้น)':num(m.rice_sticky),'เส้น':num(m.noodle_n),'ข้าว+เส้น รวม':num(m.rice_white)+num(m.rice_sticky)+num(m.noodle_n),'ผัก (ทัพพี)':num(m.veg_ladle),'ผัก (ฝ่ามือ)':num(m.veg_palm),
+      'ผลไม้ (จำนวน)':cnt('fruit'),'ผลไม้ (ชนิด)':it('fruit'),'นม':it('milk'),'ขนม':it('snack'),'กาแฟ/ชา':it('coffee'),'น้ำอัดลม/น้ำหวาน':it('soda'),'ชูกำลัง':it('energy'),'เส้น (ชนิด)':it('noodle'),'อาหารเสริม':it('supp'),
+      'เครื่องดื่มหวาน (จำนวน)':['milk','coffee','soda','energy'].reduce((a,c)=>a+Object.keys((m.items||{})[c]||{}).filter(o=>SWEETD.has(o)).reduce((x,o)=>x+num(m.items[c][o]),0),0)});meals.push(r)}));
+  // 4-6
+  const labR=labs.filter(l=>inR(l.date)).map(l=>{const r={'รหัส':l.patient_id};Object.assign(r,nm(pmap[l.patient_id]));return Object.assign(r,{'วันที่ตรวจ':l.date,'รายการ':TL[l.type]||l.type,'ค่า':num(l.value),'ผู้บันทึก':l.recorded_by})});
+  const alR=X.alerts.filter(a=>ids.has(a.patient_id)&&inR(a.date)).map(a=>{const r={'รหัส':a.patient_id};Object.assign(r,nm(pmap[a.patient_id]));return Object.assign(r,{'วันที่':a.date,'ประเภท':a.type,'ระดับ (1-3)':num(a.level),'รายละเอียด':a.message,'สถานะ':a.status==='open'?'ยังไม่ติดตาม':'ติดตามแล้ว','วิธีติดตาม':a.follow_how,'ผลการติดตาม':a.follow_note,'ผู้ติดตาม':a.follow_by,'เวลาติดตาม':a.follow_at})});
+  const noR=X.notes.filter(n=>ids.has(n.patient_id)&&inR(n.datetime)).map(n=>{const r={'รหัส':n.patient_id};Object.assign(r,nm(pmap[n.patient_id]));return Object.assign(r,{'วันเวลา':n.datetime,'ผู้บันทึก':n.by,'บันทึก':n.text})});
+  const dict=[['ส่งออกเมื่อ',new Date().toLocaleString('th-TH')],['ผู้ส่งออก',SNAME],['ช่วงวันที่',o.from+' ถึง '+o.to],['กลุ่ม',$('exGrp').selectedOptions[0].textContent],['ซ่อนชื่อ/เบอร์โทร',o.anon?'ใช่ (ใช้รหัสผู้ป่วย)':'ไม่ (มีข้อมูลระบุตัวตน — เก็บรักษาตาม PDPA)'],[],
+    ['ตัวแปร','ความหมาย'],['% การบันทึก','วันที่บันทึก ÷ จำนวนวันตั้งแต่เริ่มโครงการ (หรือวันเริ่มช่วง) ถึงวันสิ้นสุดช่วง × 100'],['ซดน้ำแกง (0-3)','0 ไม่ซด · 1 นิดหน่อย · 2 ครึ่งถ้วย · 3 หมดถ้วย'],['จ้ำน้ำพริก (0-2)','0 ไม่จ้ำ · 1 นิดหน่อยบางคำ · 2 เกือบทุกคำ'],
+    ['โปรตีน (ช้อน)','เนื้อสัตว์เป็นช้อนกินข้าว + ไข่ (1 ฟอง = 2 ช้อน) รวมทั้งวัน (เฉพาะระยะ 3b)'],['ข้าว+เส้น รวม','ข้าวสวย (ทัพพี) + ข้าวเหนียว (ปั้น) + เส้น (ชาม/จับ/ซอง) ต่อมื้อ · เกณฑ์ไม่เกิน 2'],
+    ['เครื่องดื่มหวาน','นมหวาน/ช็อกโกแลต/เปรี้ยว/ถั่วเหลืองหวาน, กาแฟ 3in1/เย็น, ชาเย็น, โอวัลติน, น้ำอัดลม, น้ำหวาน, น้ำผลไม้, ชาเขียวขวด, เครื่องดื่มชูกำลัง'],
+    ['ระดับแจ้งเตือน','3 ด่วน (น้ำตาลต่ำ, ยาแก้ปวด, eGFR ลด >2) · 2 ติดตาม · 1 เฝ้าดู'],['ค่าว่าง','ไม่ได้บันทึก หรือไม่เกี่ยวข้องกับกลุ่มนั้น']];
+  return {sum,daily,meals,labR,alR,noR,dict};
+}
+async function doExport(){
+  const o={from:$('exFrom').value||'2000-01-01',to:$('exTo').value||ymd(new Date()),grp:$('exGrp').value,anon:$('exAnon').checked};
+  if(o.from>o.to){$('exErr').textContent='วันที่เริ่มต้องไม่เกินวันที่สิ้นสุด';return}
+  $('exErr').textContent='';$('exBtn').disabled=true;$('exBtn').textContent='⏳ กำลังเตรียมไฟล์...';
+  try{
+    await loadXlsx();const X=await api('exportAll');const E=buildExport(X,o);
+    if(!E.sum.length)throw new Error('ไม่มีผู้ป่วยตามเงื่อนไขที่เลือก');
+    const wb=XLSX.utils.book_new(),add=(rows,name)=>{const ws=rows.length?XLSX.utils.json_to_sheet(rows):XLSX.utils.aoa_to_sheet([['ไม่มีข้อมูลในช่วงนี้']]);
+      if(rows.length)ws['!cols']=Object.keys(rows[0]).map(k=>({wch:Math.min(40,Math.max(8,k.length+2,...rows.slice(0,50).map(r=>String(r[k]==null?'':r[k]).length)))}));XLSX.utils.book_append_sheet(wb,ws,name)};
+    add(E.sum,'สรุปรายคน');add(E.daily,'บันทึกรายวัน');add(E.meals,'อาหารรายมื้อ_ลดหวาน');add(E.labR,'ผลตรวจ');add(E.alR,'แจ้งเตือน');add(E.noR,'บันทึกติดตาม');
+    const wd=XLSX.utils.aoa_to_sheet(E.dict);wd['!cols']=[{wch:24},{wch:90}];XLSX.utils.book_append_sheet(wb,wd,'คำอธิบาย');
+    const fn='kindee_'+(o.anon?'deid_':'')+o.grp+'_'+o.from+'_'+o.to+'.xlsx';XLSX.writeFile(wb,fn);toast('ดาวน์โหลด '+fn+' แล้ว');
+  }catch(e){$('exErr').textContent=e.message}
+  $('exBtn').disabled=false;$('exBtn').textContent='📥 ดาวน์โหลดไฟล์ Excel';
 }
 
 /* ---------- ทั่วไป ---------- */
