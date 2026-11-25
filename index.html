@@ -30,17 +30,27 @@
 
 <section class="card" id="c-food">
   <h2>🍲 วันนี้กินอะไร <span class="ok">✔ แล้ว</span></h2>
-  <div class="hint">เลือกมื้อ แล้วแตะเมนูที่กิน (เลือกได้หลายอย่าง)</div>
-  <div class="tabs" id="mealTabs"><button class="on" data-m="0">เช้า</button><button data-m="1">กลางวัน</button><button data-m="2">เย็น</button></div>
-  <div class="grid" id="foodGrid"></div>
+  <div class="hint only-ckd">เลือกมื้อ แล้วแตะเมนูที่กิน (เลือกได้หลายอย่าง)</div>
+  <div class="hint only-dm">เลือกมื้อ แล้วบอกว่ากิน<b>เท่าไร</b> · กด + / − ได้เลย · <span style="border:2px solid #f5c98a;border-radius:10px;padding:0 6px">ขอบส้ม</span> = หวาน</div>
+  <div class="tabs" id="mealTabs"><button class="on" data-m="0">🌅 เช้า</button><button data-m="1">☀️ กลางวัน</button><button data-m="2">🌙 เย็น</button></div>
+  <div class="only-3b">
+    <div class="protbox" style="margin:0 0 10px">
+      <div class="q">🍖 เนื้อสัตว์ / ไข่ <b id="protMealName">มื้อเช้า</b></div>
+      <div class="row"><span>เนื้อหมู ไก่ ปลา (ช้อนกินข้าว)</span><div class="step"><button onclick="stepProt('prot',-1)">−</button><b id="protN">0</b><button onclick="stepProt('prot',1)">+</button></div></div>
+      <div class="row"><span>ไข่ (ฟอง) <small style="color:#5b6b64">= 2 ช้อน</small></span><div class="step"><button onclick="stepProt('egg',-1)">−</button><b id="eggN">0</b><button onclick="stepProt('egg',1)">+</button></div></div>
+      <div class="protsum" id="protSum"></div>
+    </div>
+  </div>
+  <div class="only-ckd"><div class="grid" id="foodGrid"></div></div>
+  <div class="only-dm" id="dmMeal"></div>
   <div class="other" id="otherBox">
-    <div class="hint" style="margin:0 0 4px">✏️ พิมพ์เมนูอื่นที่กินมื้อนี้ (เช่น แกงเห็ด, ต้มไก่บ้าน)</div>
+    <div class="hint" style="margin:0 0 4px" id="otherHint">✏️ พิมพ์เมนูอื่นที่กินมื้อนี้ (เช่น แกงเห็ด, ต้มไก่บ้าน)</div>
     <textarea id="otherTxt" maxlength="200" placeholder="พิมพ์ชื่ออาหาร..."></textarea>
   </div>
-  <div style="margin-top:12px">
+  <div class="only-ckd" style="margin-top:12px">
     <div class="row"><span>🥬 ผักทั้งวัน (กำมือ)</span><div class="step"><button onclick="stepV('veg',-1)">−</button><b id="veg">0</b><button onclick="stepV('veg',1)">+</button></div></div>
-    <div class="row" style="display:none" id="riceRow"><span>🍙 ข้าวเหนียวทั้งวัน (ปั้น)</span><div class="step"><button onclick="stepV('rice',-1)">−</button><b id="rice">0</b><button onclick="stepV('rice',1)">+</button></div></div>
   </div>
+  <div class="only-dm"><div class="dmsum" id="dmSum"></div></div>
   <div class="only-ckd" style="margin-top:6px">
     <div class="lvq"><div class="q">🥣 ซดน้ำแกง น้ำต้ม มากแค่ไหน</div>
       <div class="lv" data-q="soup_lv" style="grid-template-columns:repeat(4,1fr)">
@@ -52,14 +62,12 @@
       </div></div>
     <div class="row" style="border-top:1px dashed #e2ebe6"><span>เติมผงปรุง น้ำปลา ปลาร้าเพิ่มไหม</span><div class="yn" data-q="season"><button data-v="0">ไม่</button><button data-v="1">เติม</button></div></div>
   </div>
-  <div class="only-dm" style="margin-top:6px">
-    <div class="row"><span>ดื่มน้ำหวาน น้ำอัดลม กาแฟ 3in1 ไหม</span><div class="yn" data-q="sweet"><button data-v="0">ไม่</button><button data-v="1">ดื่ม</button></div></div>
-  </div>
 </section>
 
 <section class="card" id="c-water">
   <h2>💧 ดื่มน้ำเปล่า <span class="ok">✔ แล้ว</span></h2>
   <div class="hint">แตะแก้วตามจำนวนที่ดื่ม · เป้าหมายของคุณ <b id="wGoal">8</b> แก้ว</div>
+  <div class="tip3a only-3a">💡 กลุ่ม 3a: <b>เน้นดื่มน้ำให้ครบเป้าทุกวัน</b> ช่วยให้ไตทำงานได้ดี</div>
   <div class="glasses" id="glasses"></div>
   <div style="font-size:17px">ดื่มแล้ว <b id="wCount">0</b> แก้ว</div>
 </section>

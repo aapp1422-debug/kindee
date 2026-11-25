@@ -1,5 +1,5 @@
 /* Service worker: เก็บไฟล์แอปไว้ในเครื่อง ให้เปิดได้แม้สัญญาณอ่อน (ข้อมูลยังส่งผ่าน API) */
-const CACHE = 'kindee-v2';
+const CACHE = 'kindee-v3';
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'config.js', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });

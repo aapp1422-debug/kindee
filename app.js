@@ -9,6 +9,20 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 const GNAME = { ckd: '🫘 กลุ่มชะลอไต', dm: '🏃 กลุ่มลดหวานลดพุง' };
 const MEALS = ['เช้า', 'กลางวัน', 'เย็น'];
 const MOVE = [{ e: '🚶', n: 'เดิน' }, { e: '🌾', n: 'ทำนา ทำไร่' }, { e: '🌱', n: 'ทำสวน' }, { e: '🧹', n: 'งานบ้าน' }, { e: '🚲', n: 'ปั่นจักรยาน' }, { e: '💃', n: 'รำ / แอโรบิก' }];
+/* กลุ่มลดหวาน: รายการที่บันทึกเป็นปริมาณ (รหัส, ชื่อ, หน่วย, หวาน=1) */
+const CAT = [
+  { k: 'fruit', e: '🍌', t: 'ผลไม้', o: [['banana', 'กล้วยน้ำว้า', 'ผล'], ['mango', 'มะม่วงสุก', 'ชิ้นพอคำ', 1], ['papaya', 'มะละกอสุก', 'ชิ้นพอคำ'], ['orange', 'ส้ม', 'ผล'], ['guava', 'ฝรั่ง', 'ชิ้นพอคำ'], ['roseapple', 'ชมพู่', 'ผล'], ['watermelon', 'แตงโม', 'ชิ้นพอคำ'], ['pineapple', 'สับปะรด', 'ชิ้นพอคำ'], ['dragon', 'แก้วมังกร', 'ชิ้นพอคำ'], ['longan', 'ลำไย', 'ลูก', 1], ['durian', 'ทุเรียน', 'พู', 1], ['jackfruit', 'ขนุน', 'ยวง', 1], ['tamarind', 'มะขามหวาน', 'ฝัก', 1], ['grape', 'องุ่น', 'ลูก', 1], ['fruit_other', 'ผลไม้อื่น', 'ชิ้น']] },
+  { k: 'milk', e: '🥛', t: 'นม', o: [['plain', 'นมจืด', 'กล่อง'], ['sweet', 'นมหวาน', 'กล่อง', 1], ['choc', 'นมช็อกโกแลต', 'กล่อง', 1], ['yogurt', 'นมเปรี้ยว / โยเกิร์ตพร้อมดื่ม', 'ขวด', 1], ['soy', 'นมถั่วเหลือง (หวาน)', 'กล่อง', 1], ['soy_ns', 'นมถั่วเหลืองไม่หวาน', 'กล่อง']] },
+  { k: 'snack', e: '🍰', t: 'ขนม', o: [['thai', 'ขนมไทย / ข้าวต้มมัด', 'ชิ้น'], ['bread', 'ขนมปัง', 'แผ่น'], ['cake', 'เค้ก / เบเกอรี่', 'ชิ้น'], ['chips', 'ขนมกรุบกรอบ', 'ซอง'], ['candy', 'ลูกอม / ช็อกโกแลต', 'เม็ด'], ['icecream', 'ไอศกรีม', 'ถ้วย']] },
+  { k: 'coffee', e: '☕', t: 'กาแฟ / ชา', o: [['black', 'กาแฟดำ ไม่ใส่น้ำตาล', 'แก้ว'], ['3in1', 'กาแฟ 3in1', 'ซอง', 1], ['iced', 'กาแฟเย็น / ลาเต้', 'แก้ว', 1], ['thaitea', 'ชาเย็น / ชานม', 'แก้ว', 1], ['malt', 'โอวัลติน / ไมโล', 'แก้ว', 1], ['tea', 'ชาร้อน ไม่ใส่น้ำตาล', 'แก้ว']] },
+  { k: 'soda', e: '🥤', t: 'น้ำอัดลม / น้ำหวาน / น้ำผลไม้', o: [['soda', 'น้ำอัดลม', 'กระป๋อง', 1], ['zero', 'น้ำอัดลมไม่มีน้ำตาล', 'กระป๋อง'], ['syrup', 'น้ำหวาน / น้ำแดง', 'แก้ว', 1], ['juice', 'น้ำผลไม้กล่อง', 'กล่อง', 1], ['greentea', 'ชาเขียวขวด', 'ขวด', 1]] },
+  { k: 'energy', e: '⚡', t: 'เครื่องดื่มชูกำลัง', o: [['energy', 'เครื่องดื่มชูกำลัง', 'ขวด', 1]] },
+  { k: 'noodle', e: '🍜', t: 'เส้น', o: [['kuay', 'ก๋วยเตี๋ยว', 'ชาม'], ['khanomjeen', 'ขนมจีน', 'จับ'], ['mama', 'บะหมี่กึ่งสำเร็จรูป', 'ซอง'], ['khaopiak', 'ข้าวเปียกเส้น', 'ถ้วย']] },
+  { k: 'supp', e: '💊', t: 'อาหารเสริม / อาหารทางการแพทย์', o: [['medfood', 'อาหารทางการแพทย์ (สูตรเบาหวาน)', 'แก้ว'], ['vitamin', 'วิตามิน', 'เม็ด'], ['herbsupp', 'สมุนไพร / อาหารเสริมอื่น', 'ครั้ง']] }
+];
+const OPT = {}; CAT.forEach(c => c.o.forEach(o => OPT[o[0]] = { cat: c.k, name: o[1], unit: o[2], sweet: !!o[3] }));
+const SWEET_FRUIT = new Set(CAT[0].o.filter(o => o[3]).map(o => o[0]));
+const emptyDm = () => ({ rice_white: 0, rice_sticky: 0, veg_ladle: 0, veg_palm: 0, items: {} });
 const NSAID = ['ยาแก้ปวดข้อ ปวดเมื่อย', 'ยาชุด / ยาซอง', 'ไปฉีดยาแก้ปวด', 'ไม่รู้ชื่อยา'];
 
 /* ---------- API ---------- */
@@ -25,7 +39,9 @@ if (TOKEN) store.set('token', TOKEN); else TOKEN = store.get('token');
 
 /* ---------- สถานะฟอร์ม ---------- */
 let ME = null, FOODS = [], GROUP = 'ckd';
-const S = { meal: 0, meals: [new Set(), new Set(), new Set()], other: ['', '', ''], otherOpen: [false, false, false], veg: 0, rice: 0, v: {}, water: 0, move: new Set(), min: 0, med: null, nsaidList: new Set() };
+let STAGE = '';
+const S = { meal: 0, meals: [new Set(), new Set(), new Set()], other: ['', '', ''], otherOpen: [false, false, false], veg: 0, rice: 0, v: {}, water: 0, move: new Set(), min: 0, med: null, nsaidList: new Set(),
+  prot: [0, 0, 0], egg: [0, 0, 0], dm: [emptyDm(), emptyDm(), emptyDm()], dmOpen: [{}, {}, {}] };
 
 /* ---------- เริ่มต้น ---------- */
 async function boot() {
@@ -36,21 +52,22 @@ async function boot() {
     ME = await api('me', { token: TOKEN });
     store.set('me', ME);
   } catch (e) {
-    if (e.server) return bootMsg('⚠️', esc(e.message));
+    if (e.server) return bootMsg('⚠️', esc(e.message) + '<br><small style="color:#8a9893">รหัสลิงก์: …' + esc(String(TOKEN).slice(-4)) + '</small>');
     ME = store.get('me');
     if (!ME) return bootMsg('📶', 'เชื่อมต่ออินเทอร์เน็ตไม่ได้<br><small>ลองใหม่อีกครั้งเมื่อมีสัญญาณ</small><br><br><button class="btn-retry" onclick="location.reload()" style="padding:12px 24px;font:inherit;border-radius:12px;border:2px solid #0f7a5c;background:#fff;color:#0f7a5c">ลองใหม่</button>');
     $('offlineBar').classList.add('show');
   }
   FOODS = ME.foods || [];
   GROUP = ME.patient.group;
-  document.body.className = GROUP;
+  STAGE = GROUP === 'ckd' ? (ME.patient.ckd_stage || '3a') : '';
+  document.body.className = GROUP + (STAGE ? ' s' + STAGE : '');
   $('hello').textContent = 'สวัสดีค่ะ คุณ' + ME.patient.name.replace(/^(นาย|นางสาว|นาง)\s*/, '') + ' 👋';
   $('today').textContent = new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  $('grpBadge').textContent = GNAME[GROUP];
+  $('grpBadge').textContent = GNAME[GROUP] + (STAGE ? ' ' + STAGE : '');
   setStreak(ME.streak);
   $('wGoal').textContent = ME.patient.water_goal || 8;
   $('mGoal').textContent = ME.patient.move_goal || 30;
-  $('riceRow').style.display = GROUP === 'dm' ? 'flex' : 'none';
+  $('otherHint').textContent = GROUP === 'dm' ? '✏️ กับข้าว / อาหารอื่นที่กินมื้อนี้ (ไม่บังคับ)' : '✏️ พิมพ์เมนูอื่นที่กินมื้อนี้ (เช่น แกงเห็ด, ต้มไก่บ้าน)';
   restore(ME.log || pendingToday());
   bindStatic();
   renderAll();
@@ -76,7 +93,10 @@ function restore(l) {
   if (!l) return;
   let meals = l.meals_json;
   try { if (typeof meals === 'string') meals = meals ? JSON.parse(meals) : []; } catch (e) { meals = []; }
-  (meals || []).forEach(m => { const i = MEALS.indexOf(m.meal); if (i < 0) return; (m.items || []).forEach(c => S.meals[i].add(c)); if (m.other) { S.other[i] = m.other; S.otherOpen[i] = true; } });
+  (meals || []).forEach(m => { const i = MEALS.indexOf(m.meal); if (i < 0) return; (m.items || []).forEach(c => S.meals[i].add(c)); if (m.other) { S.other[i] = m.other; S.otherOpen[i] = true; } S.prot[i] = num(m.protein_spoon); S.egg[i] = num(m.egg); });
+  let dmm = l.dm_meals_json;
+  try { if (typeof dmm === 'string') dmm = dmm ? JSON.parse(dmm) : []; } catch (e) { dmm = []; }
+  (dmm || []).forEach(m => { const i = MEALS.indexOf(m.meal); if (i < 0) return; S.dm[i] = Object.assign(emptyDm(), m, { items: m.items || {} }); });
   S.veg = num(l.veg); S.rice = num(l.rice); S.water = num(l.water); S.min = num(l.move_min);
   String(l.move_types || '').split(',').filter(Boolean).forEach(n => { const i = MOVE.findIndex(m => m.n === n); if (i >= 0) S.move.add(i); });
   S.med = l.med || null;
@@ -116,8 +136,60 @@ function renderFood() {
   o.onclick = () => { S.otherOpen[S.meal] = !open; if (open) S.other[S.meal] = ''; renderFood(); upd(); if (!open) $('otherTxt').focus(); };
   g.appendChild(o);
   $('otherBox').classList.toggle('show', open); $('otherTxt').value = S.other[S.meal];
-  $('veg').textContent = S.veg; $('rice').textContent = S.rice;
+  $('veg').textContent = S.veg;
+  if (GROUP === 'dm') { $('otherBox').classList.add('show'); renderDm(); }
+  if (STAGE === '3b') renderProt();
 }
+function renderProt() {
+  $('protMealName').textContent = 'มื้อ' + MEALS[S.meal];
+  $('protN').textContent = S.prot[S.meal]; $('eggN').textContent = S.egg[S.meal];
+  const tot = protTotal(), goal = ME.patient.protein_goal || 8;
+  $('protSum').className = 'protsum' + (tot > goal ? ' over' : '');
+  $('protSum').innerHTML = 'วันนี้รวม <b>' + tot + '</b> จากเป้า <b>' + goal + '</b> ช้อน ' + (tot > goal ? '⚠️ เกินเป้าแล้ว มื้อต่อไปลดเนื้อสัตว์ลงนะคะ' : (tot ? '👍' : ''));
+}
+const protTotal = () => S.prot.reduce((a, b) => a + b, 0) + 2 * S.egg.reduce((a, b) => a + b, 0);
+function stepProt(k, d) { const a = k === 'prot' ? S.prot : S.egg; a[S.meal] = Math.max(0, Math.min(k === 'prot' ? 20 : 6, a[S.meal] + d)); renderProt(); upd(); }
+
+/* ---------- กลุ่มลดหวาน: บันทึกปริมาณรายมื้อ ---------- */
+function stepper(id, val) { return '<div class="step sm"><button onclick="dmStep(\'' + id + '\',-1)">−</button><b>' + val + '</b><button onclick="dmStep(\'' + id + '\',1)">+</button></div>'; }
+function renderDm() {
+  const m = S.dm[S.meal], open = S.dmOpen[S.meal];
+  let h = '<div class="dmrow"><span class="lb">🍚 ข้าวสวย<small>ทัพพี</small></span>' + stepper('rice_white', m.rice_white) + '</div>' +
+    '<div class="dmrow"><span class="lb">🍙 ข้าวเหนียว<small>ปั้น (ขนาดไข่ไก่)</small></span>' + stepper('rice_sticky', m.rice_sticky) + '</div>' +
+    '<div class="dmrow"><span class="lb">🥬 ผัก</span><div class="vegpair"><div>' + stepper('veg_ladle', m.veg_ladle) + '<div class="u">ทัพพี (สุก)</div></div><div>' + stepper('veg_palm', m.veg_palm) + '<div class="u">ฝ่ามือ (สด)</div></div></div></div>';
+  CAT.forEach(c => {
+    const sel = Object.keys(m.items[c.k] || {}).filter(o => m.items[c.k][o] > 0);
+    h += '<div class="cat"><div class="ct">' + c.e + ' ' + c.t + '</div><div class="opts">' + c.o.map(o => '<button class="' + (sel.indexOf(o[0]) >= 0 || open[o[0]] ? 'on' : '') + (o[3] ? ' sw' : '') + '" onclick="dmPick(\'' + c.k + '\',\'' + o[0] + '\')">' + o[1] + '</button>').join('') + '</div>';
+    if (sel.length) h += '<div class="sel">' + sel.map(o => '<div class="dmrow"><span class="lb">' + OPT[o].name + '<small>' + OPT[o].unit + '</small></span>' + stepper(c.k + '.' + o, m.items[c.k][o]) + '</div>').join('') + '</div>';
+    h += '</div>';
+  });
+  $('dmMeal').innerHTML = h;
+  renderDmSum();
+}
+function dmPick(cat, o) { const it = S.dm[S.meal].items; it[cat] = it[cat] || {}; it[cat][o] = it[cat][o] > 0 ? 0 : 1; renderDm(); upd(); }
+function dmStep(id, d) {
+  const m = S.dm[S.meal];
+  if (id.indexOf('.') > 0) { const [c, o] = id.split('.'); m.items[c][o] = Math.max(0, Math.min(20, (m.items[c][o] || 0) + d)); }
+  else m[id] = Math.max(0, Math.min(20, (m[id] || 0) + d));
+  renderDm(); upd();
+}
+function dmTotals() {
+  const t = { rice_white: 0, rice_sticky: 0, veg_ladle: 0, veg_palm: 0, sweet: 0, sweetFruit: 0, perMealStarch: [] };
+  CAT.forEach(c => t[c.k] = 0);
+  S.dm.forEach((m, i) => {
+    ['rice_white', 'rice_sticky', 'veg_ladle', 'veg_palm'].forEach(k => t[k] += num(m[k]));
+    let noodle = 0;
+    CAT.forEach(c => Object.keys(m.items[c.k] || {}).forEach(o => { const n = num(m.items[c.k][o]); t[c.k] += n; if (c.k === 'noodle') noodle += n; if (OPT[o] && OPT[o].sweet && c.k !== 'fruit') t.sweet += n; if (SWEET_FRUIT.has(o)) t.sweetFruit += n; }));
+    t.perMealStarch[i] = num(m.rice_white) + num(m.rice_sticky) + noodle;
+  });
+  return t;
+}
+function renderDmSum() {
+  const t = dmTotals();
+  $('dmSum').innerHTML = '<b>📊 วันนี้รวม 3 มื้อ</b><br>🍚 ข้าวสวย ' + t.rice_white + ' ทัพพี · 🍙 ข้าวเหนียว ' + t.rice_sticky + ' ปั้น · 🍜 เส้น ' + t.noodle + '<br>🥬 ผัก ' + t.veg_ladle + ' ทัพพี + ' + t.veg_palm + ' ฝ่ามือ · 🍌 ผลไม้ ' + t.fruit + '<br>🥛 นม ' + t.milk + ' · 🍰 ขนม ' + t.snack + ' · ☕ กาแฟ/ชา ' + t.coffee + ' · ' +
+    (t.sweet ? '<span style="color:#a3261b">🥤 เครื่องดื่มหวาน ' + t.sweet + '</span>' : '🥤 เครื่องดื่มหวาน 0 👍');
+}
+const dmMealHas = m => num(m.rice_white) + num(m.rice_sticky) + num(m.veg_ladle) + num(m.veg_palm) > 0 || CAT.some(c => Object.values(m.items[c.k] || {}).some(n => n > 0));
 function renderWater() {
   const goal = ME.patient.water_goal || 8, g = $('glasses'); g.innerHTML = '';
   for (let i = 0; i < Math.max(goal, S.water + 1) && i < 15; i++) {
@@ -143,7 +215,7 @@ function renderChoices() {
   $('nsaidSub').classList.toggle('show', S.v.nsaid === 1);
 }
 function sections() {
-  const r = { 'c-food': S.meals.some(m => m.size) || S.other.some(Boolean), 'c-water': S.water > 0, 'c-move': S.min > 0, 'c-med': !!S.med };
+  const r = { 'c-food': GROUP === 'dm' ? S.dm.some(dmMealHas) || S.other.some(Boolean) : (S.meals.some(m => m.size) || S.other.some(Boolean)), 'c-water': S.water > 0, 'c-move': S.min > 0, 'c-med': !!S.med };
   if (GROUP === 'ckd') r['c-risk'] = 'nsaid' in S.v && 'herb' in S.v; else r['c-hypo'] = 'hypo' in S.v;
   return r;
 }
@@ -156,11 +228,17 @@ function upd() {
 /* ---------- บันทึก ---------- */
 function buildLog() {
   const log = {
-    meals_json: MEALS.map((m, i) => ({ meal: m, items: [...S.meals[i]], other: S.other[i] })).filter(m => m.items.length || m.other),
+    meals_json: MEALS.map((m, i) => { const o = { meal: m, items: GROUP === 'ckd' ? [...S.meals[i]] : [], other: S.other[i] }; if (STAGE === '3b') { o.protein_spoon = S.prot[i]; o.egg = S.egg[i]; } return o; }).filter(m => m.items.length || m.other || m.protein_spoon || m.egg),
     veg: S.veg, water: S.water, move_types: [...S.move].map(i => MOVE[i].n).join(','), move_min: S.min, med: S.med || ''
   };
   ['soup_lv', 'dip_lv', 'season', 'sweet', 'nsaid', 'herb', 'hypo'].forEach(k => { if (k in S.v) log[k] = S.v[k]; });
-  if (GROUP === 'dm') log.rice = S.rice;
+  if (STAGE === '3b') log.protein = protTotal();
+  if (GROUP === 'dm') {
+    const t = dmTotals();
+    log.dm_meals_json = MEALS.map((m, i) => { const d = S.dm[i], items = {}; CAT.forEach(c => { const x = {}; Object.keys(d.items[c.k] || {}).forEach(o => { if (d.items[c.k][o] > 0) x[o] = d.items[c.k][o]; }); if (Object.keys(x).length) items[c.k] = x; });
+      return { meal: m, rice_white: d.rice_white, rice_sticky: d.rice_sticky, veg_ladle: d.veg_ladle, veg_palm: d.veg_palm, noodle_n: Object.values(items.noodle || {}).reduce((a, b) => a + b, 0), items }; }).filter((m, i) => dmMealHas(S.dm[i]));
+    Object.assign(log, { rice: t.rice_sticky, rice_white: t.rice_white, veg: t.veg_ladle, veg_palm: t.veg_palm, fruit_n: t.fruit, milk_n: t.milk, snack_n: t.snack, coffee_n: t.coffee, energy_n: t.energy, soda_n: t.soda, noodle_n: t.noodle, supp_n: t.supp, sweet: t.sweet > 0 ? 1 : 0 });
+  }
   if (S.v.nsaid === 1) log.nsaid_types = [...S.nsaidList].join(',');
   const bs = $('bpS').value.trim(), bd = $('bpD').value.trim(), bp = (bs || bd) ? bs + '/' + bd : '', dtx = $('dtx').value.trim(), wt = $('wt').value.trim();
   if (GROUP === 'ckd' && bp) log.bp = bp;
@@ -200,7 +278,7 @@ function feedback(log, res, offline) {
   const others = S.other.map((t, i) => t ? MEALS[i] + ': ' + esc(t) : '').filter(Boolean);
   const salty = [...all].filter(c => foodsById[c] && foodsById[c].salty).length, sweet = [...all].filter(c => foodsById[c] && foodsById[c].carb).length;
   let h = offline ? '<h3>📶 บันทึกไว้ในเครื่องแล้ว</h3><div class="hint">จะส่งให้ รพ.สต. อัตโนมัติเมื่อมีอินเทอร์เน็ต</div>' : '<h3>✅ บันทึกเรียบร้อยค่ะ</h3>';
-  h += '<div class="line">🍲 อาหาร ' + (all.size + others.length) + ' รายการ · 🥬 ผัก ' + S.veg + ' กำมือ</div><div class="line">💧 น้ำ ' + S.water + ' แก้ว · 🚶 ออกแรง ' + S.min + ' นาที</div><div class="line">💊 ยา: ' + (S.med || '-') + '</div>';
+  h += (GROUP === 'dm' ? '<div class="dmsum" style="margin:6px 0">' + $('dmSum').innerHTML + '</div>' : '<div class="line">🍲 อาหาร ' + (all.size + others.length) + ' รายการ · 🥬 ผัก ' + S.veg + ' กำมือ</div>') + '<div class="line">💧 น้ำ ' + S.water + ' แก้ว · 🚶 ออกแรง ' + S.min + ' นาที</div><div class="line">💊 ยา: ' + (S.med || '-') + '</div>';
   const good = [], bad = [];
   const wg = ME.patient.water_goal || 8, mg = ME.patient.move_goal || 30;
   if (GROUP === 'ckd') {
@@ -211,12 +289,20 @@ function feedback(log, res, offline) {
     if (salty >= 3 || tips.length) bad.push('วันนี้ได้เกลือค่อนข้างมาก พรุ่งนี้ลอง' + (tips.length ? ': ' + tips.join(', ') : 'เลือกเมนูต้ม นึ่ง แทนเมนูเค็ม') + ' นะคะ');
     else if (all.size || others.length) good.push('วันนี้คุมเค็มได้ดีมากค่ะ 👏');
     if (S.v.nsaid === 1) bad.push('ยาแก้ปวด/ยาฉีดอาจทำให้ไตเสื่อมเร็วขึ้น <b>เจ้าหน้าที่ รพ.สต. จะติดต่อกลับเพื่อแนะนำค่ะ</b>');
+    if (STAGE === '3b') { const pt = protTotal(), pg = ME.patient.protein_goal || 8; if (pt > pg) bad.push('วันนี้เนื้อสัตว์/ไข่รวม ' + pt + ' ช้อน เกินเป้า ' + pg + ' ช้อน พรุ่งนี้ลองลดเนื้อสัตว์ลงมื้อละ 1–2 ช้อน แล้วเพิ่มผักแทนนะคะ'); else if (pt) good.push('คุมเนื้อสัตว์ได้ตามเป้า (' + pt + '/' + pg + ' ช้อน) ดีมากค่ะ 👏'); }
+    if (STAGE === '3a' && S.water < wg) bad.push('กลุ่ม 3a เน้นดื่มน้ำให้ครบ ' + wg + ' แก้ว วันนี้ยังขาดอีก ' + (wg - S.water) + ' แก้วค่ะ');
     if (S.v.herb === 1) bad.push('สมุนไพร/อาหารเสริมบางชนิดมีผลต่อไต ถ่ายรูปขวดหรือซองไว้ให้เจ้าหน้าที่ดูนะคะ');
   } else {
     const dtx = Number(log.dtx);
     if (S.v.hypo === 1 || (dtx && dtx < 70)) bad.push('<b>ถ้ามีอาการตอนนี้:</b> ดื่มน้ำหวานหรือน้ำผลไม้ครึ่งแก้ว หรืออมลูกอม 3–4 เม็ด พัก 15 นาที ถ้าไม่ดีขึ้นทำซ้ำ ถ้าซึมหรือเรียกไม่รู้สึกตัว โทร 1669 · <b>เจ้าหน้าที่จะได้รับแจ้งค่ะ</b>');
-    if (S.rice > 3 || S.v.sweet === 1 || sweet >= 3) bad.push('วันนี้แป้งและน้ำตาลค่อนข้างมาก พรุ่งนี้ลองลดข้าวเหนียวลง 1 ปั้นนะคะ');
-    else if (all.size || others.length) good.push('วันนี้คุมแป้งและน้ำตาลได้ดีค่ะ 👏');
+    const t = dmTotals(), overMeals = t.perMealStarch.map((n, i) => n > 2 ? MEALS[i] : '').filter(Boolean);
+    if (overMeals.length) bad.push('มื้อ' + overMeals.join(', ') + ' ข้าว/เส้นเกิน 2 ทัพพี (ปั้น) ลองลดลงมื้อละ 1 ทัพพี แล้วเพิ่มผักแทนนะคะ');
+    if (t.sweet) bad.push('วันนี้ดื่มเครื่องดื่มหวาน ' + t.sweet + ' แก้ว/ขวด ลองเปลี่ยนเป็นน้ำเปล่า กาแฟดำ หรือนมจืดนะคะ');
+    if (t.snack > 1) bad.push('ขนมวันนี้ ' + t.snack + ' ชิ้น/ซอง ลองให้เหลือไม่เกินวันละ 1 นะคะ');
+    if (t.sweetFruit > 0) bad.push('ผลไม้หวานจัด (มะม่วงสุก ลำไย ทุเรียน ขนุน มะขามหวาน องุ่น) กินได้แต่ครั้งละน้อย ๆ นะคะ');
+    if (t.veg_ladle + t.veg_palm >= 3) good.push('กินผักได้ ' + (t.veg_ladle + t.veg_palm) + ' ทัพพี/ฝ่ามือ เยี่ยมมาก 🥬');
+    else if (S.dm.some(dmMealHas)) bad.push('ผักยังน้อย ลองเพิ่มให้ได้มื้อละ 1–2 ทัพพีนะคะ');
+    if (!overMeals.length && !t.sweet && t.snack <= 1 && S.dm.some(dmMealHas)) good.push('วันนี้คุมแป้งและน้ำตาลได้ดีค่ะ 👏');
   }
   if (S.water >= wg) good.push('ดื่มน้ำครบเป้าหมายแล้ว 💧');
   if (S.min >= mg) good.push('ออกแรงครบ ' + mg + ' นาทีแล้ว เยี่ยมมาก 💪');
@@ -256,9 +342,11 @@ function show(v) {
 
 /* ================= ผลของฉัน ================= */
 const GOPT = {
+  ckd3b: [['protein', 5, '🍖 เนื้อสัตว์/ไข่ไม่เกินเป้าต่อวัน อย่างน้อย 5 วัน']],
   ckd: [['soup', 5, '🥣 ไม่ซดน้ำแกง (ซดไม่เกินนิดหน่อย) อย่างน้อย 5 วัน'], ['dip', 5, '🌶️ จ้ำน้ำพริก/แจ่ว แค่ปลายผัก อย่างน้อย 5 วัน'], ['season', 7, '🧂 ไม่เติมผงปรุงเพิ่ม ทุกวัน'], ['water', 6, '💧 ดื่มน้ำครบเป้า อย่างน้อย 6 วัน'], ['walk', 5, '🚶 ออกแรง 20 นาทีขึ้นไป อย่างน้อย 5 วัน']],
-  dm: [['rice', 5, '🍙 ข้าวเหนียวไม่เกิน 2 ปั้น อย่างน้อย 5 วัน'], ['veg', 5, '🥬 กินผัก 3 กำมือขึ้นไป อย่างน้อย 5 วัน'], ['sweet', 6, '🥤 ไม่ดื่มน้ำหวาน/กาแฟ 3in1 อย่างน้อย 6 วัน'], ['walk', 5, '🚶 ออกแรง 20 นาทีขึ้นไป อย่างน้อย 5 วัน'], ['fruit', 5, '🍌 ไม่กินผลไม้หวาน อย่างน้อย 5 วัน']]
+  dm: [['rice', 5, '🍚 ข้าว/เส้นไม่เกิน 2 ทัพพี (ปั้น) ทุกมื้อ อย่างน้อย 5 วัน'], ['veg', 5, '🥬 ผักรวมวันละ 3 ทัพพี/ฝ่ามือขึ้นไป อย่างน้อย 5 วัน'], ['sweet', 6, '🥤 ไม่ดื่มเครื่องดื่มหวาน อย่างน้อย 6 วัน'], ['snack', 5, '🍰 ขนมไม่เกินวันละ 1 ชิ้น อย่างน้อย 5 วัน'], ['walk', 5, '🚶 ออกแรง 20 นาทีขึ้นไป อย่างน้อย 5 วัน']]
 };
+const goalOpts = () => (STAGE === '3b' ? GOPT.ckd3b : []).concat(GOPT[GROUP]);
 function goalMet(code, l) {
   const meals = parseMeals(l.meals_json);
   switch (code) {
@@ -267,8 +355,10 @@ function goalMet(code, l) {
     case 'season': return l.season !== '' && num(l.season) === 0;
     case 'water': return num(l.water) >= (ME.patient.water_goal || 8);
     case 'walk': return num(l.move_min) >= 20;
-    case 'rice': return num(l.rice) <= 2;
-    case 'veg': return num(l.veg) >= 3;
+    case 'rice': { const dm = parseMeals(l.dm_meals_json); return dm.length ? dm.every(m => num(m.rice_white) + num(m.rice_sticky) + num(m.noodle_n) <= 2) : num(l.rice) <= 2; }
+    case 'veg': return num(l.veg) + num(l.veg_palm) >= 3;
+    case 'snack': return num(l.snack_n) <= 1;
+    case 'protein': return l.protein !== '' && l.protein != null && num(l.protein) <= (ME.patient.protein_goal || 8);
     case 'sweet': return l.sweet !== '' && num(l.sweet) === 0;
     case 'fruit': return !meals.some(m => (m.items || []).indexOf('F10') >= 0);
   }
@@ -281,7 +371,7 @@ function weekDates(offsetWeeks) { const d = new Date(); d.setHours(12); const wd
 
 let RES = null, gSel = null;
 async function loadResults() {
-  $('resSub').textContent = GNAME[GROUP];
+  $('resSub').textContent = GNAME[GROUP] + (STAGE ? ' ' + STAGE : '');
   try { RES = await api('results', { token: TOKEN }); store.set('res', RES); }
   catch (e) { RES = store.get('res'); if (!RES) { $('resBody').innerHTML = '<div class="card empty">โหลดผลไม่ได้ ลองใหม่เมื่อมีอินเทอร์เน็ต</div>'; return; } }
   renderRes();
@@ -290,8 +380,8 @@ function renderRes() {
   const logs = {}; (RES.last14 || []).forEach(l => logs[l.date] = l);
   const wk = weekDates(0), days = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'], tdy = todayStr();
   const rows = GROUP === 'ckd'
-    ? [['💧 ดื่มน้ำครบ', 'water'], ['🚶 ออกแรง 20 นาที', 'walk'], ['💊 กินยาครบ', 'med'], ['🥣 ไม่ซดน้ำแกง', 'soup'], ['🌶️ จ้ำน้อย', 'dip']]
-    : [['💧 ดื่มน้ำครบ', 'water'], ['🚶 ออกแรง 20 นาที', 'walk'], ['💊 กินยาครบ', 'med'], ['🍙 ข้าวเหนียว ≤ 2 ปั้น', 'rice'], ['🥤 ไม่ดื่มน้ำหวาน', 'sweet']];
+    ? [['💧 ดื่มน้ำครบ', 'water'], ['🚶 ออกแรง 20 นาที', 'walk'], ['💊 กินยาครบ', 'med'], ['🥣 ไม่ซดน้ำแกง', 'soup'], ['🌶️ จ้ำน้อย', 'dip']].concat(STAGE === '3b' ? [['🍖 เนื้อสัตว์ตามเป้า', 'protein']] : [])
+    : [['💧 ดื่มน้ำครบ', 'water'], ['🚶 ออกแรง 20 นาที', 'walk'], ['💊 กินยาครบ', 'med'], ['🍚 ข้าว ≤ 2 ทุกมื้อ', 'rice'], ['🥬 ผัก ≥ 3', 'veg'], ['🥤 ไม่ดื่มหวาน', 'sweet']];
   let t = '<tr><th></th>' + days.map(d => '<th>' + d + '</th>').join('') + '<th>รวม</th></tr>';
   rows.forEach(([n, c]) => {
     let s = 0;
@@ -310,9 +400,16 @@ function renderRes() {
     const got = cur.code ? wk.filter(d => logs[d] && goalMet(cur.code, logs[d])).length : null;
     h += '<div class="goalbox"><div style="font-size:15px;color:#5b6b64">เป้าหมายสัปดาห์นี้</div><div style="font-weight:700">' + esc(cur.text) + '</div>' + (got !== null ? '<div style="margin-top:4px">ทำได้แล้ว <b>' + got + '/' + cur.need + ' วัน</b></div>' : '') + '<button class="btn-link" style="margin-top:6px;background:none;border:none;color:#0f7a5c;font:inherit;text-decoration:underline" onclick="RES.goal=\'\';renderRes()">เปลี่ยนเป้าหมาย</button></div>';
   } else {
-    h += '<div style="margin-top:10px;font-weight:600">เลือกเป้าหมายสัปดาห์นี้ 1 ข้อ</div><div class="gopt" id="gopt">' + GOPT[GROUP].map((g, i) => '<button data-i="' + i + '">' + g[2] + '</button>').join('') + '</div><button class="gbtn" onclick="setGoal()">ตั้งเป้าหมายนี้</button><div id="goalErr"></div>';
+    h += '<div style="margin-top:10px;font-weight:600">เลือกเป้าหมายสัปดาห์นี้ 1 ข้อ</div><div class="gopt" id="gopt">' + goalOpts().map((g, i) => '<button data-i="' + i + '">' + g[2] + '</button>').join('') + '</div><button class="gbtn" onclick="setGoal()">ตั้งเป้าหมายนี้</button><div id="goalErr"></div>';
   }
   h += '</section>';
+  if (GROUP === 'dm') {
+    const qd = wk.filter(d => d <= tdy && logs[d]);
+    if (qd.length) h += '<section class="card"><h2>🍽️ กินไปเท่าไรบ้าง (สัปดาห์นี้)</h2><table class="qtab"><tr><th>วัน</th><th>🍚 ข้าวสวย</th><th>🍙 เหนียว</th><th>🥬 ผัก</th><th>🍌 ผลไม้</th><th>🍰 ขนม</th><th>🥤 หวาน</th></tr>' +
+      qd.map(d => { const l = logs[d], dm = parseMeals(l.dm_meals_json); let sw = 0; dm.forEach(m => Object.keys(m.items || {}).forEach(c => { if (c === 'fruit') return; Object.keys(m.items[c]).forEach(o => { if (OPT[o] && OPT[o].sweet) sw += num(m.items[c][o]); }); }));
+        return '<tr><td>' + days[(new Date(d + 'T12:00:00').getDay() + 6) % 7] + '</td><td>' + num(l.rice_white) + '</td><td>' + num(l.rice) + '</td><td' + (num(l.veg) + num(l.veg_palm) < 3 ? ' class="hi"' : '') + '>' + (num(l.veg) + num(l.veg_palm)) + '</td><td>' + num(l.fruit_n) + '</td><td' + (num(l.snack_n) > 1 ? ' class="hi"' : '') + '>' + num(l.snack_n) + '</td><td' + (sw ? ' class="hi"' : '') + '>' + sw + '</td></tr>'; }).join('') +
+      '</table><div class="hint" style="margin-top:6px">ตัวแดง = เกิน/ต่ำกว่าที่แนะนำ</div></section>';
+  }
   // ผลแล็บ
   const labs = RES.labs || [];
   if (GROUP === 'dm') {
@@ -359,7 +456,7 @@ function labCard(title, legend, list, cls, fmtV, sub, msg, note) {
 const thDate = s => { const d = new Date(String(s).slice(0, 10) + 'T12:00:00'); return isNaN(d) ? s : d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }); };
 async function setGoal() {
   if (gSel === null) { $('goalErr').innerHTML = '<div class="alert">กรุณาเลือกเป้าหมาย 1 ข้อก่อนค่ะ</div>'; return; }
-  const g = GOPT[GROUP][gSel], text = g[0] + '|' + g[1] + '|' + g[2];
+  const g = goalOpts()[gSel], text = g[0] + '|' + g[1] + '|' + g[2];
   try { await api('setGoal', { token: TOKEN, goal_text: text }); RES.goal = text; gSel = null; renderRes(); }
   catch (e) { $('goalErr').innerHTML = '<div class="alert">' + esc(e.server ? e.message : 'ไม่มีอินเทอร์เน็ต ลองใหม่อีกครั้งค่ะ') + '</div>'; }
 }
@@ -388,11 +485,14 @@ const KB = {
     { e: '💊', t: 'ยาแก้ปวด ยาชุด ฉีดยา ทำร้ายไต', b: '<ul><li>ยาแก้ปวดข้อ ปวดเมื่อย (กลุ่ม NSAIDs) ยาชุด และยาฉีดแก้ปวด ทำให้ไตเสื่อมเร็วขึ้น</li><li>ปวดเมื่อย ลองประคบร้อน หรือนวดแผนไทยที่ รพ.สต.</li><li>ก่อนซื้อยาเอง ถามเจ้าหน้าที่ก่อนทุกครั้ง</li></ul>' },
     { e: '🌿', t: 'สมุนไพร ยาหม้อ อาหารเสริม', b: '<ul><li>บางชนิดมีผลต่อไต หรือทำปฏิกิริยากับยาที่กินอยู่</li><li>ถ่ายรูปขวด/ซอง หรือนำมาให้เจ้าหน้าที่ดูวันนัด</li></ul>' },
     { e: '🔢', t: 'ค่าไต (eGFR) ของฉันหมายถึงอะไร', b: '<ul><li>eGFR บอกว่าไตยังทำงานได้ประมาณเท่าไร</li><li>ระยะ 3a = 45–59 · ระยะ 3b = 30–44</li><li>เป้าหมายของเรา: ให้ค่าลดลงช้าที่สุด ไม่เกิน 5 ต่อปี</li></ul><div class="tip">💡 ดูค่าไตของตัวเองได้ในแท็บ "ผลของฉัน"</div>' },
+    { s3b: 1, e: '🍖', t: 'ระยะ 3b: กินโปรตีนเท่าไรดี', b: '<ul><li>ไตระยะ 3b ต้องลดงานของไต จึงกินเนื้อสัตว์ให้พอดี ไม่มากเกิน</li><li>นับเป็น <b>ช้อนกินข้าว</b>: เนื้อหมู ไก่ ปลา 2 ช้อน = 1 ส่วน · ไข่ 1 ฟอง = 2 ช้อน</li><li>เป้าของคุณดูได้ในหน้าบันทึก (เจ้าหน้าที่ตั้งให้ตามน้ำหนักตัว)</li><li>ไม่ต้องงดเนื้อสัตว์ แต่แบ่งกินให้ครบ 3 มื้อ เลือกปลา ไข่ขาว ไก่ไม่ติดหนัง</li></ul><div class="tip">💡 อาหารแปรรูป เช่น ไส้กรอก หมูยอ ปลาส้ม ทั้งเค็มและมีโปรตีน ควรเลี่ยง</div>' },
+    { s3a: 1, e: '💧', t: 'ระยะ 3a: ทำไมต้องเน้นดื่มน้ำ', b: '<ul><li>ดื่มน้ำให้พอช่วยให้ไตขับของเสียได้ดี และลดโอกาสไตเสื่อมจากการขาดน้ำ</li><li>ดื่มตามเป้าในแอป ทยอยดื่มทั้งวัน ไม่ต้องรอกระหาย</li><li>ถ้าบวม หอบเหนื่อย ปัสสาวะน้อยลง ให้หยุดเพิ่มน้ำ แล้วบอกเจ้าหน้าที่ทันที</li></ul>' },
     { e: '💧', t: 'ดื่มน้ำเท่าไรดี', b: '<ul><li>ดื่มตามเป้าที่เจ้าหน้าที่ตั้งให้ในแอป</li><li>ใช้แก้วใบเดิมทุกวัน จะนับง่าย</li><li>ถ้าบวม หอบเหนื่อย ปัสสาวะน้อยลง ให้รีบบอกเจ้าหน้าที่</li></ul>' }
   ],
   dm: [
     { e: '⚖️', t: 'ทำไมลดพุงแล้วเบาหวานดีขึ้น', b: '<ul><li>ไขมันที่สะสมในตับและตับอ่อน ทำให้ร่างกายคุมน้ำตาลไม่ได้</li><li>เมื่อน้ำหนักลด ไขมันส่วนนี้ลดลง น้ำตาลจะดีขึ้นจนบางคนลดยาได้</li><li>เป้าหมาย: ลด 10–15 กก. ภายใน 1 ปี</li></ul>' },
     { e: '🍙', t: 'ข้าวเหนียว กินเท่าไรดี', b: '<ul><li>ปั้นเล็กขนาดประมาณไข่ไก่ มื้อละ 1–2 ปั้น</li><li>ปั้นใส่จานไว้ก่อน ไม่หยิบจากกระติบไปเรื่อย ๆ</li><li>กินผักและเนื้อก่อน แล้วค่อยกินข้าว</li></ul>' },
+    { e: '📏', t: 'นับปริมาณอาหารอย่างไร', b: '<ul><li>🍚 ข้าวสวย 1 ทัพพี ≈ ข้าวเหนียว 1 ปั้นขนาดไข่ไก่ (แป้งพอ ๆ กัน)</li><li>🍜 ก๋วยเตี๋ยว 1 ชาม หรือ ขนมจีน 1 จับ นับเป็นแป้ง 1–2 ทัพพี</li><li>🥬 ผักสุก 1 ทัพพี ≈ ผักสด 1 ฝ่ามือ</li><li>เป้าหมาย: ข้าว/เส้น <b>ไม่เกิน 2 ทัพพี (ปั้น) ต่อมื้อ</b> ผักให้ได้ <b>วันละ 3 ขึ้นไป</b></li></ul>' },
     { e: '🍽️', t: 'จานสุขภาพ 2:1:1', b: '<ul><li>ผัก 2 ส่วน (ครึ่งจาน)</li><li>ข้าว/แป้ง 1 ส่วน</li><li>เนื้อสัตว์ไม่ติดมัน ปลา ไข่ 1 ส่วน</li></ul>' },
     { e: '🥤', t: 'น้ำตาลซ่อนในเครื่องดื่ม', b: '<ul><li>กาแฟ 3in1 น้ำอัดลม ชาเย็น นมเปรี้ยว น้ำผลไม้กล่อง</li><li>เปลี่ยนเป็นน้ำเปล่า กาแฟดำ ชาไม่ใส่น้ำตาล</li></ul>' },
     { e: '🍌', t: 'ผลไม้ เลือกอย่างไร', b: '<ul><li>กินได้ แต่ครั้งละ 1 กำมือ</li><li>เลือก ฝรั่ง ชมพู่ แก้วมังกร แทน ทุเรียน ลำไย มะม่วงสุก</li><li>กินผลสด ไม่ดื่มน้ำผลไม้</li></ul>' },
@@ -401,7 +501,7 @@ const KB = {
   ]
 };
 function renderKb() {
-  const list = KB[GROUP].concat(KB.both), read = new Set(store.get('kbRead') || []);
+  const list = KB[GROUP].filter(k => (!k.s3b || STAGE === '3b') && (!k.s3a || STAGE === '3a')).concat(KB.both), read = new Set(store.get('kbRead') || []);
   $('kbSub').textContent = GNAME[GROUP];
   const ti = new Date().getDate() % list.length;
   const card = (k, i, today) => '<div class="kb' + (today ? ' today open' : '') + '"><div class="kh" onclick="this.parentNode.classList.toggle(\'open\')"><span class="em">' + k.e + '</span>' + k.t + '<span class="rd">' + (read.has(GROUP + i) ? '✓ อ่านแล้ว' : '') + '</span></div><div class="kb-body">' + k.b + (read.has(GROUP + i) ? '' : '<button class="read" onclick="markRead(' + i + ')">✓ อ่านแล้ว</button>') + '</div></div>';

@@ -123,7 +123,7 @@ tr.click{cursor:pointer}tr.click:hover{background:#f5faf7}
 <main>
 <section class="view on" id="v-ov">
   <div class="filters">
-    <div class="seg" id="grpSeg"><button class="on" data-g="all">ทั้งหมด</button><button data-g="ckd">🫘 ชะลอไต</button><button data-g="dm">🏃 ลดหวานลดพุง</button></div>
+    <div class="seg" id="grpSeg"><button class="on" data-g="all">ทั้งหมด</button><button data-g="ckd">🫘 ชะลอไต</button><button data-g="ckd3a">3a</button><button data-g="ckd3b">3b</button><button data-g="dm">🏃 ลดหวานลดพุง</button></div>
     <select id="mooSel"><option value="all">ทุกหมู่บ้าน</option></select>
     <button class="btn" onclick="loadOv()">🔄 รีเฟรช</button>
     <span class="muted" id="ovTime"></span>
@@ -178,6 +178,10 @@ tr.click{cursor:pointer}tr.click:hover{background:#f5faf7}
         <div><label>ผลตรวจก่อนเริ่ม: <span id="rLabName">eGFR</span> *</label><input id="rLab" inputmode="decimal"></div>
         <div><label>น้ำหนักเริ่มต้น (กก.) <span id="rWtReq"></span></label><input id="rWt" inputmode="decimal"></div>
       </div>
+      <div class="row2" id="rCkdBox">
+        <div><label>ระยะ CKD</label><select id="rStage"><option value="">อัตโนมัติจาก eGFR</option><option value="3a">3a — ลดเค็ม + ดื่มน้ำ</option><option value="3b">3b — ลดเค็ม + จำกัดโปรตีน</option></select><div class="muted" id="rStageTxt"></div></div>
+        <div><label>เป้าโปรตีน (ช้อนกินข้าว/วัน)</label><input id="rProt" value="8" inputmode="numeric"><div class="muted" id="rProtSug"></div></div>
+      </div>
       <div class="row2">
         <div><label>เป้าดื่มน้ำ (แก้ว/วัน)</label><input id="rWater" value="8" inputmode="numeric"></div>
         <div><label>เป้าออกแรง (นาที/วัน)</label><input id="rMove" value="30" inputmode="numeric"></div>
@@ -199,6 +203,16 @@ tr.click{cursor:pointer}tr.click:hover{background:#f5faf7}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const GN={ckd:'🫘 ชะลอไต',dm:'🏃 ลดหวานลดพุง'};
+const gLabel=p=>GN[p.group]+(p.group==='ckd'&&p.ckd_stage?' '+p.ckd_stage:'');
+const OPTN={banana:['กล้วยน้ำว้า','ผล'],mango:['มะม่วงสุก','ชิ้น'],papaya:['มะละกอ','ชิ้น'],orange:['ส้ม','ผล'],guava:['ฝรั่ง','ชิ้น'],roseapple:['ชมพู่','ผล'],watermelon:['แตงโม','ชิ้น'],pineapple:['สับปะรด','ชิ้น'],dragon:['แก้วมังกร','ชิ้น'],longan:['ลำไย','ลูก'],durian:['ทุเรียน','พู'],jackfruit:['ขนุน','ยวง'],tamarind:['มะขามหวาน','ฝัก'],grape:['องุ่น','ลูก'],fruit_other:['ผลไม้อื่น','ชิ้น'],
+ plain:['นมจืด','กล่อง'],sweet:['นมหวาน','กล่อง'],choc:['นมช็อกโกแลต','กล่อง'],yogurt:['นมเปรี้ยว','ขวด'],soy:['นมถั่วเหลืองหวาน','กล่อง'],soy_ns:['นมถั่วเหลืองไม่หวาน','กล่อง'],
+ thai:['ขนมไทย','ชิ้น'],bread:['ขนมปัง','แผ่น'],cake:['เค้ก','ชิ้น'],chips:['ขนมกรุบกรอบ','ซอง'],candy:['ลูกอม/ช็อกโกแลต','เม็ด'],icecream:['ไอศกรีม','ถ้วย'],
+ black:['กาแฟดำ','แก้ว'],'3in1':['กาแฟ 3in1','ซอง'],iced:['กาแฟเย็น','แก้ว'],thaitea:['ชาเย็น','แก้ว'],malt:['โอวัลติน','แก้ว'],tea:['ชาร้อน','แก้ว'],
+ soda:['น้ำอัดลม','กระป๋อง'],zero:['น้ำอัดลม 0%','กระป๋อง'],syrup:['น้ำหวาน','แก้ว'],juice:['น้ำผลไม้กล่อง','กล่อง'],greentea:['ชาเขียวขวด','ขวด'],energy:['เครื่องดื่มชูกำลัง','ขวด'],
+ kuay:['ก๋วยเตี๋ยว','ชาม'],khanomjeen:['ขนมจีน','จับ'],mama:['บะหมี่กึ่งฯ','ซอง'],khaopiak:['ข้าวเปียกเส้น','ถ้วย'],medfood:['อาหารทางการแพทย์','แก้ว'],vitamin:['วิตามิน','เม็ด'],herbsupp:['อาหารเสริม/สมุนไพร','ครั้ง']};
+const SWEETD=new Set(['sweet','choc','yogurt','soy','3in1','iced','thaitea','malt','soda','syrup','juice','greentea','energy']);
+const pj=v=>{try{return typeof v==='string'?(v?JSON.parse(v):[]):(v||[])}catch(e){return[]}};
+const protSug=w=>{w=+w;if(!(w>=30&&w<=150))return '';const lo=Math.max(2,Math.round((w*0.6-15)/3.5)),hi=Math.max(lo,Math.round((w*0.8-15)/3.5));return 'แนะนำ '+lo+'–'+hi+' ช้อน/วัน (คิดจากโปรตีน 0.6–0.8 ก./กก. หักโปรตีนจากข้าวและผักประมาณ 15 ก. · เนื้อสัตว์ 1 ช้อนกินข้าว ≈ 3.5 ก.)'};
 const num=v=>(v===''||v==null||isNaN(Number(v)))?0:Number(v);
 const thD=s=>{const d=new Date(String(s).slice(0,10)+'T12:00:00');return isNaN(d)?esc(s):d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})};
 const thDs=s=>{const d=new Date(String(s).slice(0,10)+'T12:00:00');return isNaN(d)?esc(s):d.toLocaleDateString('th-TH',{day:'numeric',month:'short'})};
@@ -242,7 +256,7 @@ async function loadOv(){
   try{OV=await api('overview');}catch(e){$('ovBody').innerHTML='<div class="panel"><p class="err">'+esc(e.message)+'</p></div>';return}
   const moos=[...new Set(OV.patients.map(p=>String(p.moo)))].sort((a,b)=>a-b);
   $('mooSel').innerHTML='<option value="all">ทุกหมู่บ้าน</option>'+moos.map(m=>'<option value="'+esc(m)+'"'+(m===fM?' selected':'')+'>หมู่ '+esc(m)+'</option>').join('');
-  const opts=OV.patients.map(p=>'<option value="'+esc(p.patient_id)+'">'+esc(p.name)+' ('+GN[p.group]+', หมู่ '+esc(p.moo)+')</option>').join('');
+  const opts=OV.patients.map(p=>'<option value="'+esc(p.patient_id)+'">'+esc(p.name)+' ('+gLabel(p)+', หมู่ '+esc(p.moo)+')</option>').join('');
   const cur=$('ptSel').value,curL=$('labPt').value;
   $('ptSel').innerHTML='<option value="">— เลือก —</option>'+opts;$('labPt').innerHTML='<option value="">— เลือก —</option>'+opts;
   $('ptSel').value=cur;$('labPt').value=curL;
@@ -262,7 +276,7 @@ const saltTxt=v=>v<=0.7?'😊 เค็มน้อย':(v<=0.9?'😐 ปาน�
 const kpi=(l,v,s,c)=>'<div class="kpi '+c+'"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="s">'+s+'</div></div>';
 function renderOv(){
   if(!OV)return;
-  const P=OV.patients.filter(p=>(fG==='all'||p.group===fG)&&(fM==='all'||String(p.moo)===fM));
+  const P=OV.patients.filter(p=>(fG==='all'||p.group===fG||(fG.indexOf('ckd3')===0&&p.group==='ckd'&&'ckd'+p.ckd_stage===fG))&&(fM==='all'||String(p.moo)===fM));
   const ids=new Set(P.map(p=>p.patient_id));
   const A=OV.alerts.filter(a=>ids.has(a.patient_id)).sort((a,b)=>((a.status==='open')===(b.status==='open')?0:(a.status==='open'?-1:1))||(b.level-a.level)||(a.date<b.date?1:-1));
   const openA=A.filter(a=>a.status==='open'),recT=P.filter(p=>p.recToday).length;
@@ -275,11 +289,11 @@ function renderOv(){
     kpi('ทำได้ตามเป้า (7 วัน)',avg+'%','เฉลี่ยทุกพฤติกรรม','green')+'</div>';
   h+='<div class="grid2"><div><div class="panel"><h2>🚩 ต้องติดตาม <span class="r">ค้าง '+openA.length+' รายการ</span></h2>';
   h+=A.length?A.map(a=>{const p=byId(a.patient_id)||{name:a.patient_id,group:'ckd',moo:''};const done=a.status!=='open';
-    return '<div class="flag'+(done?' done':'')+'"><div class="t">'+(a.level>=3?'🔴':a.level==2?'🟠':'🟡')+' <a href="#" onclick="openPt(\''+esc(a.patient_id)+'\');return false">'+esc(p.name)+'</a> <span class="pill p-'+p.group+'">'+GN[p.group]+'</span></div><div class="m">หมู่ '+esc(p.moo)+' · '+thDs(a.date)+' · '+esc(a.message)+'</div>'+
+    return '<div class="flag'+(done?' done':'')+'"><div class="t">'+(a.level>=3?'🔴':a.level==2?'🟠':'🟡')+' <a href="#" onclick="openPt(\''+esc(a.patient_id)+'\');return false">'+esc(p.name)+'</a> <span class="pill p-'+p.group+'">'+gLabel(p)+'</span></div><div class="m">หมู่ '+esc(p.moo)+' · '+thDs(a.date)+' · '+esc(a.message)+'</div>'+
     (done?'<div class="m">✅ '+esc(a.follow_how)+' — '+esc(a.follow_note)+' ('+esc(a.follow_by)+')</div>':'<div class="act" id="act-'+esc(a.alert_id)+'"><button class="btn pri" onclick="followUp(\''+esc(a.alert_id)+'\')">บันทึกการติดตาม</button><button class="btn" onclick="openPt(\''+esc(a.patient_id)+'\')">ดูข้อมูล</button></div>')+'</div>'}).join(''):'<p class="muted">ไม่มีรายการที่ต้องติดตาม 🎉</p>';
   h+='</div></div><div><div class="panel"><h2>👥 รายชื่อผู้ป่วย <span class="r">กดชื่อเพื่อดูรายละเอียด</span></h2><div class="tbl"><table><tr><th>ชื่อ</th><th>กลุ่ม</th><th>หมู่</th><th>วันนี้</th><th>บันทึก 7 วัน</th><th>ทำได้ตามเป้า</th><th>ผลตรวจล่าสุด</th><th>🚩</th></tr>';
   h+=P.length?P.map(p=>{const lab=p.lastLab;const lh=lab?'<span class="pill '+(lab.type==='eGFR'?egCls(lab.value):a1cCls(lab.value))+'">'+(lab.type==='eGFR'?'eGFR '+lab.value:'A1c '+lab.value+'%')+'</span>':'-';
-    return '<tr class="click" onclick="openPt(\''+esc(p.patient_id)+'\')"><td>'+esc(p.name)+'</td><td><span class="pill p-'+p.group+'">'+GN[p.group]+'</span></td><td>'+esc(p.moo)+'</td><td>'+(p.recToday?'✅':(p.noRecDays>=3?'<span class="pill p-red">ขาด '+p.noRecDays+' วัน</span>':'<span class="pill p-gry">ยัง</span>'))+'</td>'+
+    return '<tr class="click" onclick="openPt(\''+esc(p.patient_id)+'\')"><td>'+esc(p.name)+'</td><td><span class="pill p-'+p.group+'">'+gLabel(p)+'</span></td><td>'+esc(p.moo)+'</td><td>'+(p.recToday?'✅':(p.noRecDays>=3?'<span class="pill p-red">ขาด '+p.noRecDays+' วัน</span>':'<span class="pill p-gry">ยัง</span>'))+'</td>'+
     '<td><span class="bar"><i style="width:'+(p.rec7/7*100)+'%;background:'+(p.rec7>=5?'#2e9e6b':p.rec7>=3?'#e8a317':'#d0442c')+'"></i></span>'+p.rec7+'/7</td>'+
     '<td><span class="bar"><i style="width:'+p.goalPct+'%;background:'+(p.goalPct>=70?'#2e9e6b':p.goalPct>=50?'#e8a317':'#d0442c')+'"></i></span>'+p.goalPct+'%</td><td>'+lh+'</td><td>'+(p.openAlerts?'<span class="pill p-red">'+p.openAlerts+'</span>':'')+'</td></tr>'}).join(''):'<tr><td colspan="8" class="muted">ยังไม่มีผู้ป่วย — เริ่มที่แท็บ ➕ ลงทะเบียน</td></tr>';
   h+='</table></div></div></div></div>';
@@ -308,18 +322,24 @@ async function loadPt(id){
 }
 const METRICS={
   water:(p,l)=>num(l.water)>=num(p.water_goal||8),move:(p,l)=>num(l.move_min)>=num(p.move_goal||30),med:(p,l)=>l.med==='ครบ',
-  salt:(p,l)=>!(num(l.soup_lv)>=2||num(l.dip_lv)>=2||num(l.season)===1),carb:(p,l)=>!(num(l.rice)>2||num(l.sweet)===1),
+  salt:(p,l)=>!(num(l.soup_lv)>=2||num(l.dip_lv)>=2||num(l.season)===1),
+  carb:(p,l)=>{const m=pj(l.dm_meals_json);return m.length?m.every(x=>num(x.rice_white)+num(x.rice_sticky)+num(x.noodle_n)<=2)&&num(l.sweet)!==1:!(num(l.rice)>2||num(l.sweet)===1)},
+  veg:(p,l)=>pj(l.dm_meals_json).length?num(l.veg)+num(l.veg_palm)>=3:null,
+  protein:(p,l)=>(l.protein===''||l.protein==null)?null:num(l.protein)<=num(p.protein_goal||8),
   nsaid:(p,l)=>!(num(l.nsaid)===1),hypo:(p,l)=>!(num(l.hypo)===1||(num(l.dtx)>0&&num(l.dtx)<70))
 };
 function renderPt(D){
   const p=D.patient,ck=p.group==='ckd',logs={};(D.last14||[]).forEach(l=>logs[l.date]=l);
   const base=new Date(((OV&&OV.today)||ymd(new Date()))+'T12:00:00');const days=Array.from({length:14},(_,i)=>{const d=new Date(base);d.setDate(base.getDate()-(13-i));return ymd(d)}); // ใช้วันที่ของเซิร์ฟเวอร์ (เวลาไทย)
   const open=(D.alerts||[]).filter(a=>a.status==='open');
-  let h='<div class="panel"><div class="ph"><h2>'+esc(p.name)+'</h2><span class="pill p-'+p.group+'">'+GN[p.group]+'</span><span class="muted">'+esc(p.patient_id)+' · อายุ '+esc(p.age)+' ปี · หมู่ '+esc(p.moo)+' · '+esc(p.recorder)+(p.osm?' · อสม. '+esc(p.osm):'')+(p.phone?' · ☎ '+esc(p.phone):'')+' · เริ่ม '+thD(p.start_date)+'</span>'+
+  let h='<div class="panel"><div class="ph"><h2>'+esc(p.name)+'</h2><span class="pill p-'+p.group+'">'+gLabel(p)+'</span><span class="muted">'+esc(p.patient_id)+' · อายุ '+esc(p.age)+' ปี · หมู่ '+esc(p.moo)+' · '+esc(p.recorder)+(p.osm?' · อสม. '+esc(p.osm):'')+(p.phone?' · ☎ '+esc(p.phone):'')+' · เริ่ม '+thD(p.start_date)+'</span>'+
     '<button class="btn" style="margin-left:auto" onclick="showQR(\''+esc(p.patient_id)+'\')">🔳 QR ลิงก์ส่วนตัว</button></div>';
   if(open.length)h+='<div style="margin-top:8px">'+open.map(a=>'<span class="pill p-red" style="margin:2px">🚩 '+esc(a.message)+'</span>').join('')+'</div>';
   h+='<div id="ptQR"></div></div><div class="grid2"><div>';
   h+='<div class="panel"><h2>🎯 เป้าหมายรายบุคคล</h2><div class="goalrow"><label>💧 ดื่มน้ำ (แก้ว/วัน)</label><input id="gW" value="'+esc(p.water_goal)+'" inputmode="numeric"></div><div class="goalrow"><label>🚶 ออกแรง (นาที/วัน)</label><input id="gM" value="'+esc(p.move_goal)+'" inputmode="numeric"></div>'+
+    (ck?'<div class="goalrow"><label>🫘 ระยะ CKD</label><select id="gS"><option value="3a"'+(p.ckd_stage==='3a'?' selected':'')+'>3a — เน้นลดเค็ม + ดื่มน้ำ</option><option value="3b"'+(p.ckd_stage==='3b'?' selected':'')+'>3b — ลดเค็ม + จำกัดโปรตีน</option></select></div>'+
+      '<div class="goalrow"><label>🍖 เป้าโปรตีน (ช้อน/วัน)</label><input id="gP" value="'+esc(p.protein_goal||8)+'" inputmode="numeric"><span class="muted">ใช้กับระยะ 3b</span></div>'+
+      '<div class="goalrow"><label class="muted">คำนวณจากน้ำหนัก</label><input id="gWt" placeholder="กก." inputmode="decimal" oninput="$(\'gSug\').textContent=protSug(this.value)"><span class="muted" id="gSug" style="flex-basis:100%"></span></div>':'')+
     '<div class="goalrow"><label>📅 เป้าสัปดาห์นี้</label><span>'+(D.goal?esc(String(D.goal).split('|').pop()):'<span class="muted">ผู้ป่วยยังไม่ได้เลือก</span>')+'</span></div><button class="btn pri" id="gBtn" onclick="saveGoals(\''+esc(p.patient_id)+'\')">บันทึกเป้าหมาย</button><div class="err" id="gErr"></div></div>';
   const tl=ck?'eGFR':'HbA1c',L=(D.labs||[]).filter(l=>l.type===tl);
   h+='<div class="panel"><h2>🧪 '+(ck?'ค่าไต eGFR':'น้ำตาลสะสม HbA1c')+' <span class="r">ทุก 3 เดือน</span></h2><div class="labs">'+
@@ -329,18 +349,23 @@ function renderPt(D){
   h+='<div class="panel"><h2>📝 บันทึกการให้คำแนะนำ</h2><textarea id="nT" rows="2" maxlength="500" style="width:100%" placeholder="เช่น คุยเรื่องอุปสรรค ตั้งแผน ถ้า...จะ..."></textarea><button class="btn pri" id="nBtn" style="margin:6px 0 10px" onclick="addNote(\''+esc(p.patient_id)+'\')">เพิ่มบันทึก</button><div class="err" id="nErr"></div>'+
     ((D.notes||[]).length?D.notes.map(n=>'<div class="note"><div class="d">'+thD(n.datetime)+' · '+esc(n.by)+'</div>'+esc(n.text)+'</div>').join(''):'<p class="muted">ยังไม่มีบันทึก</p>')+'</div>';
   h+='</div><div>';
-  const rows=[['💧 น้ำครบเป้า','water'],['🚶 ออกแรงครบเป้า','move'],['💊 กินยาครบ','med'],ck?['🧂 คุมเค็ม','salt']:['🍙 คุมแป้ง/หวาน','carb'],ck?['⚠️ ไม่ใช้ยาแก้ปวด','nsaid']:['⚠️ ไม่มีน้ำตาลต่ำ','hypo']];
+  const s3b=ck&&p.ckd_stage==='3b';
+  const rows=[['💧 น้ำครบเป้า','water'],['🚶 ออกแรงครบเป้า','move'],['💊 กินยาครบ','med']].concat(ck?[['🧂 คุมเค็ม','salt']].concat(s3b?[['🍖 โปรตีนตามเป้า','protein']]:[]).concat([['⚠️ ไม่ใช้ยาแก้ปวด','nsaid']]):[['🍚 ข้าว/เส้น ≤2 ทุกมื้อ + ไม่หวาน','carb'],['🥬 ผัก ≥ 3','veg'],['⚠️ ไม่มีน้ำตาลต่ำ','hypo']]);
   const recN=days.filter(d=>logs[d]).length;
   h+='<div class="panel"><h2>🗓️ พฤติกรรม 14 วันล่าสุด <span class="r">บันทึก '+recN+'/14 วัน · ต่อเนื่อง '+(D.streak||0)+' วัน</span></h2><div class="tbl"><table class="heat"><tr><th></th>'+days.map(d=>'<th>'+Number(d.slice(8))+'</th>').join('')+'</tr>'+
-    rows.map(([n,k])=>'<tr><td class="lbl">'+n+'</td>'+days.map(d=>{const l=logs[d];return '<td class="c '+(!l?'hn':(METRICS[k](p,l)?'h1':'h0'))+'" title="'+thDs(d)+'"></td>'}).join('')+'</tr>').join('')+
+    rows.map(([n,k])=>'<tr><td class="lbl">'+n+'</td>'+days.map(d=>{const l=logs[d];const r=l?METRICS[k](p,l):null;return '<td class="c '+(r===null?'hn':(r?'h1':'h0'))+'" title="'+thDs(d)+'"></td>'}).join('')+'</tr>').join('')+
+    (s3b?'<tr><td class="lbl">🍖 ช้อน/วัน (เป้า '+num(p.protein_goal||8)+')</td>'+days.map(d=>{const l=logs[d];const v=l&&l.protein!==''&&l.protein!=null?num(l.protein):'';return '<td style="font-size:12px;'+(v!==''&&v>num(p.protein_goal||8)?'color:#c0392b;font-weight:700':'')+'">'+v+'</td>'}).join('')+'</tr>':'')+
     '</table></div><div class="legend"><span class="l1">ทำได้/ปกติ</span><span class="l0">ไม่ได้/มีเหตุการณ์</span><span class="ln">ไม่ได้บันทึก</span></div>';
   const lastLog=D.last14&&D.last14.length?D.last14[D.last14.length-1]:null;
   if(lastLog){const meals=(()=>{try{return JSON.parse(lastLog.meals_json||'[]')}catch(e){return[]}})();
     h+='<div style="margin-top:10px;font-size:14px;background:#f5faf7;border-radius:10px;padding:8px 10px"><b>บันทึกล่าสุด '+thDs(lastLog.date)+'</b> ('+esc(lastLog.recorder)+')<br>'+
-    (meals.length?'🍲 '+meals.map(m=>esc(m.meal)+': '+(m.items||[]).length+' เมนู'+(m.other?' + '+esc(m.other):'')).join(' · ')+'<br>':'')+
+    (ck&&meals.length?'🍲 '+meals.map(m=>esc(m.meal)+': '+(m.items||[]).length+' เมนู'+(m.other?' + '+esc(m.other):'')+(s3b&&(m.protein_spoon||m.egg)?' (เนื้อสัตว์ '+num(m.protein_spoon)+' ช้อน, ไข่ '+num(m.egg)+')':'')).join(' · ')+'<br>':'')+
+    (s3b&&lastLog.protein!==''?'🍖 โปรตีนรวม <b>'+num(lastLog.protein)+'</b> / เป้า '+num(p.protein_goal||8)+' ช้อน<br>':'')+
+    (!ck?dmMealsHtml(lastLog,meals):'')+
     '💧 '+num(lastLog.water)+' แก้ว · 🚶 '+num(lastLog.move_min)+' นาที '+(lastLog.move_types?'('+esc(lastLog.move_types)+')':'')+' · 💊 '+esc(lastLog.med||'-')+
     (ck?'<br>🥣 ซดน้ำแกง ระดับ '+esc(lastLog.soup_lv)+' · 🌶️ จ้ำ ระดับ '+esc(lastLog.dip_lv)+(num(lastLog.nsaid)?' · ⚠️ ยาแก้ปวด: '+esc(lastLog.nsaid_types):'')+(num(lastLog.herb)?' · 🌿 สมุนไพร':'')+(lastLog.bp?' · ❤️ '+esc(lastLog.bp):'')
-      :'<br>🍙 ข้าวเหนียว '+num(lastLog.rice)+' ปั้น · 🥤 น้ำหวาน '+(num(lastLog.sweet)?'ดื่ม':'ไม่ดื่ม')+(lastLog.dtx?' · 🩸 DTX '+esc(lastLog.dtx):'')+(lastLog.weight?' · ⚖️ '+esc(lastLog.weight)+' กก.':''))+'</div>';}
+      :(lastLog.dtx?'<br>🩸 DTX '+esc(lastLog.dtx):'')+(lastLog.weight?' · ⚖️ '+esc(lastLog.weight)+' กก.':''))+'</div>';}
+  if(!ck)h+=dmQtyTable(days,logs);
   h+='</div>';
   if(ck){const bp=(D.last14||[]).filter(l=>/^\d+\//.test(String(l.bp)));h+='<div class="panel"><h2>❤️ ความดันตัวบน (ที่ผู้ป่วยบันทึก)</h2>'+(bp.length>1?lineChart(bp.map(l=>+String(l.bp).split('/')[0]),{min:90,max:190,refs:[{v:130,l:'130',c:'#0f7a5c'}],xl:[thDs(bp[0].date),thDs(bp[bp.length-1].date)],pts:1}):'<p class="muted">ข้อมูลยังไม่พอ</p>')+'</div>'}
   else{const w=(D.labs||[]).filter(l=>l.type==='weight').map(l=>({d:l.date,v:l.value})).concat((D.last14||[]).filter(l=>num(l.weight)>0).map(l=>({d:l.date,v:num(l.weight)}))).sort((a,b)=>a.d<b.d?-1:1);
@@ -349,10 +374,30 @@ function renderPt(D){
   h+='</div></div>';
   $('ptBody').innerHTML=h;
 }
+function dmMealsHtml(l,meals){
+  const dm=pj(l.dm_meals_json);
+  if(!dm.length)return num(l.rice)?'🍙 ข้าวเหนียว '+num(l.rice)+' ปั้น · 🥤 น้ำหวาน '+(num(l.sweet)?'ดื่ม':'ไม่ดื่ม')+'<br>':'';
+  const oth={};meals.forEach(m=>{if(m.other)oth[m.meal]=m.other});
+  return dm.map(m=>{const parts=[];if(num(m.rice_white))parts.push('ข้าวสวย '+m.rice_white+' ทัพพี');if(num(m.rice_sticky))parts.push('ข้าวเหนียว '+m.rice_sticky+' ปั้น');
+    if(num(m.veg_ladle)||num(m.veg_palm))parts.push('ผัก '+num(m.veg_ladle)+' ทัพพี/'+num(m.veg_palm)+' ฝ่ามือ');
+    Object.keys(m.items||{}).forEach(c=>Object.keys(m.items[c]).forEach(o=>{const n=OPTN[o]||[o,''];parts.push((SWEETD.has(o)?'<span style="color:#c0392b">':'<span>')+esc(n[0])+' '+num(m.items[c][o])+' '+n[1]+'</span>')}));
+    const st=num(m.rice_white)+num(m.rice_sticky)+num(m.noodle_n);
+    return '<b>'+esc(m.meal)+'</b>'+(st>2?' <span class="pill p-red">ข้าว/เส้น '+st+'</span>':'')+': '+(parts.join(', ')||'-')+(oth[m.meal]?' · กับข้าว: '+esc(oth[m.meal]):'')}).join('<br>')+'<br>';
+}
+function dmQtyTable(days,logs){
+  const ds=days.filter(d=>logs[d]);if(!ds.length)return '';
+  const sw=l=>{let n=0;pj(l.dm_meals_json).forEach(m=>Object.keys(m.items||{}).forEach(c=>Object.keys(m.items[c]).forEach(o=>{if(SWEETD.has(o))n+=num(m.items[c][o])})));return n};
+  const mx=l=>Math.max(0,...pj(l.dm_meals_json).map(m=>num(m.rice_white)+num(m.rice_sticky)+num(m.noodle_n)));
+  const c=(v,bad)=>'<td'+(bad?' style="color:#c0392b;font-weight:700"':'')+'>'+v+'</td>';
+  return '<div class="panel"><h2>🍽️ ปริมาณอาหารรายวัน <span class="r">ตัวแดง = เกินเกณฑ์</span></h2><div class="tbl"><table><tr><th>วันที่</th><th>ข้าวสวย<br><small>ทัพพี</small></th><th>เหนียว<br><small>ปั้น</small></th><th>เส้น</th><th>สูงสุด/มื้อ</th><th>ผัก<br><small>ท+ฝ</small></th><th>ผลไม้</th><th>นม</th><th>ขนม</th><th>กาแฟ/ชา</th><th>หวาน</th><th>ชูกำลัง</th><th>เสริม</th></tr>'+
+    ds.map(d=>{const l=logs[d],v=num(l.veg)+num(l.veg_palm),m=mx(l),s=sw(l);return '<tr><td>'+thDs(d)+'</td>'+c(num(l.rice_white))+c(num(l.rice))+c(num(l.noodle_n))+c(m,m>2)+c(num(l.veg)+'+'+num(l.veg_palm),v<3)+c(num(l.fruit_n))+c(num(l.milk_n))+c(num(l.snack_n),num(l.snack_n)>1)+c(num(l.coffee_n))+c(s,s>0)+c(num(l.energy_n),num(l.energy_n)>0)+c(num(l.supp_n))+'</tr>'}).join('')+
+    '</table></div><p class="muted" style="margin-top:6px">เกณฑ์: ข้าว/เส้นไม่เกิน 2 ต่อมื้อ · ผักรวม ≥ 3 ต่อวัน · ขนม ≤ 1 · ไม่มีเครื่องดื่มหวาน</p></div>';
+}
 async function saveGoals(id){
   const w=+$('gW').value,m=+$('gM').value;
   if(!(w>=1&&w<=20)||!(m>=0&&m<=180)){$('gErr').textContent='กรุณากรอกตัวเลขให้ถูกต้อง (น้ำ 1–20 แก้ว, ออกแรง 0–180 นาที)';return}
-  $('gBtn').disabled=true;try{await api('saveGoals',{patient_id:id,water_goal:w,move_goal:m});toast('บันทึกเป้าหมายแล้ว ผู้ป่วยจะเห็นเป้าใหม่ในแอป');loadPt(id)}catch(e){$('gErr').textContent=e.message;$('gBtn').disabled=false}
+  const ex={};if($('gS')){ex.ckd_stage=$('gS').value;const pg=+$('gP').value;if(!(pg>=2&&pg<=30)){$('gErr').textContent='เป้าโปรตีนต้องอยู่ระหว่าง 2–30 ช้อน/วัน';return}ex.protein_goal=pg}
+  $('gBtn').disabled=true;try{await api('saveGoals',Object.assign({patient_id:id,water_goal:w,move_goal:m},ex));delete PCACHE[id];toast('บันทึกเป้าหมายแล้ว ผู้ป่วยจะเห็นเป้าใหม่ในแอป');loadPt(id)}catch(e){$('gErr').textContent=e.message;$('gBtn').disabled=false}
 }
 async function addNote(id){
   const t=$('nT').value.trim();if(!t){$('nErr').textContent='กรุณาพิมพ์บันทึกก่อน';return}
@@ -373,7 +418,7 @@ async function showQR(id){try{const D=await getPt(id);qrBlock(D.patient,'ptQR')}
 const QRP={};
 function printQR(id){
   const p=(PCACHE[id]&&PCACHE[id].patient)||QRP[id];if(!p)return;
-  $('printArea').innerHTML='<div class="pcard"><div style="font-size:30px">🩺</div><h3>บันทึกสุขภาพประจำวัน</h3><p>'+esc(p.name)+'</p><p>'+GN[p.group]+'</p><div id="pqr"></div><p>สแกนแล้วกด "เพิ่มไปยังหน้าจอหลัก"</p><p style="font-size:13px">รพ.สต.บ้านนาเพียงใหม่</p></div>';
+  $('printArea').innerHTML='<div class="pcard"><div style="font-size:30px">🩺</div><h3>บันทึกสุขภาพประจำวัน</h3><p>'+esc(p.name)+'</p><p>'+gLabel(p)+'</p><div id="pqr"></div><p>สแกนแล้วกด "เพิ่มไปยังหน้าจอหลัก"</p><p style="font-size:13px">รพ.สต.บ้านนาเพียงใหม่</p></div>';
   makeQR($('pqr'),appUrl(p.token),200);setTimeout(()=>window.print(),300);
 }
 async function copyUrl(u){try{await navigator.clipboard.writeText(u);toast('คัดลอกลิงก์แล้ว')}catch(e){toast('คัดลอกไม่ได้ กรุณากดค้างที่ลิงก์เพื่อคัดลอก')}}
@@ -396,7 +441,7 @@ function labPrev(){
   if(isNaN(v)){$('labPrev').innerHTML='';return}
   const D=PCACHE[id],prev=D?(D.labs||[]).filter(l=>l.type===t).pop():null;let c='p-grn',txt='',warn='';
   if(t==='HbA1c'){c=a1cCls(v);txt=v<7?'🟢 ต่ำกว่า 7%':v<8?'🟡 7–7.9%':'🔴 8% ขึ้นไป';if(v<6.5)warn='ต่ำกว่า 6.5% — พิจารณาประเมินระยะสงบ/ลดยาร่วมกับแพทย์';if(prev&&v>=prev.value)warn='ไม่ลดลงจากครั้งก่อน — ระบบจะขึ้น 🚩';}
-  if(t==='eGFR'){c=egCls(v);txt=egStage(v);if(prev&&prev.value-v>2)warn='ลดลง '+(prev.value-v)+' จากครั้งก่อน — ระบบจะขึ้น 🚩 นัดคุยหาสาเหตุ';}
+  if(t==='eGFR'){c=egCls(v);txt=egStage(v);if(prev&&prev.value-v>2)warn='ลดลง '+(prev.value-v)+' จากครั้งก่อน — ระบบจะขึ้น 🚩 นัดคุยหาสาเหตุ';const ns=v<45?'3b':'3a',cs=D&&D.patient&&D.patient.ckd_stage;if(cs&&v>=30&&v<60&&ns!==cs)warn=(warn?warn+'<br>⚠️ ':'')+'ค่านี้อยู่ระยะ '+ns+' แต่ผู้ป่วยตั้งไว้ระยะ '+cs+' — หลังบันทึก ไปเปลี่ยนระยะที่ "เป้าหมายรายบุคคล"';}
   if(t==='salt'){c=saltCls(v);txt=saltTxt(v);if(v>0.9)warn='เค็มมาก — ระบบจะขึ้น 🚩';}
   if(v<LT[t].min||v>LT[t].max){c='p-red';warn='ค่าอยู่นอกช่วงที่เป็นไปได้ ('+LT[t].min+'–'+LT[t].max+')';}
   $('labPrev').innerHTML='<div class="preview '+c+'"><b>'+v+'</b> '+txt+(prev?' · ครั้งก่อน '+prev.value+' ('+thD(prev.date)+')':'')+(warn?'<br>⚠️ '+warn:'')+'</div>';
@@ -418,12 +463,14 @@ function renderRecent(){$('labRecent').innerHTML='<tr><th>วันที่ต�
 
 /* ---------- ลงทะเบียน ---------- */
 $('rLabDate').value=ymd(new Date());
-function regLabel(){const dm=$('rGrp').value==='dm';$('rLabName').textContent=dm?'HbA1c (%)':'eGFR';$('rWtReq').textContent=dm?'*':''}
-$('rGrp').onchange=regLabel;regLabel();
+function regLabel(){const dm=$('rGrp').value==='dm';$('rLabName').textContent=dm?'HbA1c (%)':'eGFR';$('rWtReq').textContent=dm?'*':'';$('rCkdBox').style.display=dm?'none':'';regStage()}
+function regStage(){const v=parseFloat($('rLab').value),man=$('rStage').value;const st=man||(isNaN(v)?'':(v<45?'3b':'3a'));$('rStageTxt').textContent=st?'→ ใช้ระยะ '+st+(man?' (เลือกเอง)':' (จาก eGFR '+v+')')+(st==='3b'?' · บันทึกโปรตีนด้วย':''):'';$('rProtSug').textContent=protSug($('rWt').value)}
+$('rGrp').onchange=regLabel;$('rLab').oninput=regStage;$('rStage').onchange=regStage;$('rWt').oninput=regStage;regLabel();
 async function register(){
   const g=$,err=$('rErr');
   const d={name:g('rName').value.trim(),age:+g('rAge').value,moo:g('rMoo').value,group:g('rGrp').value,recorder:g('rRec').value,osm:g('rOsm').value.trim(),phone:g('rPhone').value.trim(),
     baseline_lab:parseFloat(g('rLab').value),lab_date:g('rLabDate').value,weight:g('rWt').value?parseFloat(g('rWt').value):'',water_goal:+g('rWater').value||8,move_goal:+g('rMove').value||30,consent:g('rConsent').checked};
+  if(d.group==='ckd'){d.ckd_stage=g('rStage').value;d.protein_goal=+g('rProt').value||8;if(!(d.protein_goal>=2&&d.protein_goal<=30)){err.textContent='เป้าโปรตีนต้องอยู่ระหว่าง 2–30 ช้อน/วัน';return}}
   if(!d.name){err.textContent='กรุณากรอกชื่อ-สกุล';return}
   if(!(d.age>=18&&d.age<=100)){err.textContent='กรุณากรอกอายุให้ถูกต้อง (18–100)';return}
   if(isNaN(d.baseline_lab)){err.textContent='กรุณากรอกผลตรวจก่อนเริ่ม ('+(d.group==='ckd'?'eGFR':'HbA1c')+') เพื่อใช้เป็นค่าตั้งต้น';return}
@@ -431,7 +478,7 @@ async function register(){
   if(!d.consent){err.textContent='ต้องได้รับความยินยอมจากผู้ป่วยก่อนลงทะเบียน';return}
   if(OV&&OV.patients.some(p=>p.name.replace(/\s/g,'')===d.name.replace(/\s/g,''))&&!confirm('มีชื่อนี้ในระบบแล้ว ต้องการลงทะเบียนซ้ำหรือไม่?'))return;
   err.textContent='';$('rBtn').disabled=true;
-  try{const r=await api('register',{data:d});const p={patient_id:r.patient_id,token:r.token,name:d.name,group:d.group};QRP[r.patient_id]=p;
+  try{const r=await api('register',{data:d});const p={patient_id:r.patient_id,token:r.token,name:d.name,group:d.group,ckd_stage:r.ckd_stage};QRP[r.patient_id]=p;
     qrBlock(p,'qrOut');['rName','rAge','rLab','rWt','rOsm','rPhone'].forEach(x=>g(x).value='');g('rConsent').checked=false;toast('ลงทะเบียน '+d.name+' แล้ว');loadOv()}
   catch(e){err.textContent=e.message}
   $('rBtn').disabled=false;
